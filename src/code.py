@@ -7,13 +7,11 @@ loaded by adafruit_bitmap_font
 """
 import array
 
-import board
 import displayio
 import pathlib
 import supervisor
 import sys
 import usb
-from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.text_box import TextBox
 from adafruit_display_text.bitmap_label import Label
@@ -21,7 +19,7 @@ from adafruit_displayio_layout.layouts.grid_layout import GridLayout
 from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload
 import adafruit_usb_host_descriptors
-from sized_group import SizedGroup
+from adafruit_anchored_group import AnchoredGroup
 
 display = supervisor.runtime.display
 font_file = "/fonts/terminal.lvfontbin"
@@ -47,15 +45,15 @@ mouse_tg = displayio.TileGrid(mouse_bmp, pixel_shader=mouse_bmp.pixel_shader)
 # move it to the center of the display
 mouse_tg.x = display.width // 2
 mouse_tg.y = display.height // 2
-#046d:c52f
+# 046d:c52f
 
 
-#mouse = usb.core.find(idVendor=0x046d, idProduct=0xc52f)
+# mouse = usb.core.find(idVendor=0x046d, idProduct=0xc52f)
 
 DIR_IN = 0x80
 mouse_interface_index, mouse_endpoint_address = None, None
 mouse = None
-#scan for connected USB device and loop over any found
+# scan for connected USB device and loop over any found
 print("scanning usb")
 for device in usb.core.find(find_all=True):
     # print device info
@@ -160,7 +158,7 @@ main_group.append(menu_grid)
 
 menu_title_txt = Label(font, text=config["menu_title"])
 menu_title_txt.anchor_point = (0.5, 0.5)
-menu_title_txt.anchored_position = (display.width//2, 2)
+menu_title_txt.anchored_position = (display.width // 2, 2)
 main_group.append(menu_title_txt)
 
 app_titles = []
@@ -172,7 +170,7 @@ for path in app_path.iterdir():
     code_file = path / "code.py"
     if not code_file.exists():
         continue
-    cell_group = SizedGroup()
+    cell_group = AnchoredGroup()
     icon_file = path / "icon.bmp"
     if not icon_file.exists():
         icon_file = None
@@ -189,10 +187,11 @@ for path in app_path.iterdir():
         icon_tg = displayio.TileGrid(bitmap=icon_bmp, pixel_shader=icon_palette)
         cell_group.append(icon_tg)
 
-    icon_tg.x = cell_width//2 - icon_tg.tile_width//2
-    title_txt = TextBox(font, text=apps[-1]["title"], width=WIDTH // config["width"], height=18, align=TextBox.ALIGN_CENTER)
+    icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
+    title_txt = TextBox(font, text=apps[-1]["title"], width=WIDTH // config["width"], height=18,
+                        align=TextBox.ALIGN_CENTER)
     cell_group.append(title_txt)
-    title_txt.anchor_point = (0,0)
+    title_txt.anchor_point = (0, 0)
     title_txt.anchored_position = (0, icon_tg.y + icon_tg.tile_height)
     app_titles.append(title_txt)
     menu_grid.add_content(cell_group, grid_position=(i % config["width"], i // config["width"]), cell_size=(1, 1))
@@ -257,9 +256,10 @@ while True:
                 clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
                 if clicked_cell is not None:
                     index = clicked_cell[1] * config["width"] + clicked_cell[0]
-    
+
     if index is not None:
-        supervisor.set_next_code_file(config["apps"][index]["file"], sticky_on_reload=True, reload_on_error=True, working_directory="/apps/matrix")
+        supervisor.set_next_code_file(config["apps"][index]["file"], sticky_on_reload=True, reload_on_error=True,
+                                      working_directory="/apps/matrix")
 
         if mouse and not mouse.is_kernel_driver_active(0):
             mouse.attach_kernel_driver(0)
