@@ -34,7 +34,7 @@ bg_tg = displayio.TileGrid(bitmap=background_bmp, pixel_shader=bg_palette)
 main_group.append(bg_tg)
 
 # load the mouse cursor bitmap
-mouse_bmp = displayio.OnDiskBitmap("mouse_cursor.bmp")
+mouse_bmp = displayio.OnDiskBitmap("launcher_assets/mouse_cursor.bmp")
 
 # make the background pink pixels transparent
 mouse_bmp.pixel_shader.make_transparent(0)
@@ -150,7 +150,7 @@ config = {
 
 cell_width = WIDTH // config["width"]
 
-default_icon_bmp, default_icon_palette = adafruit_imageload.load("default_icon_64.bmp")
+default_icon_bmp, default_icon_palette = adafruit_imageload.load("launcher_assets/default_icon.bmp")
 default_icon_palette.make_transparent(0)
 menu_grid = GridLayout(x=10, y=26, width=WIDTH, height=HEIGHT, grid_size=(config["width"], config["height"]),
                        divider_lines=False)
@@ -197,9 +197,9 @@ for path in app_path.iterdir():
     menu_grid.add_content(cell_group, grid_position=(i % config["width"], i // config["width"]), cell_size=(1, 1))
     i += 1
 
-left_bmp, left_palette = adafruit_imageload.load("arrow_left.bmp")
+left_bmp, left_palette = adafruit_imageload.load("launcher_assets/arrow_left.bmp")
 left_palette.make_transparent(0)
-right_bmp, right_palette = adafruit_imageload.load("arrow_right.bmp")
+right_bmp, right_palette = adafruit_imageload.load("launcher_assets/arrow_right.bmp")
 right_palette.make_transparent(0)
 
 left_tg = AnchoredTileGrid(bitmap=left_bmp, pixel_shader=left_palette)
