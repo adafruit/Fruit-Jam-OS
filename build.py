@@ -1,7 +1,19 @@
 import os
+import time
 import zipfile
 import shutil
 from pathlib import Path
+import requests
+
+LEARN_PROJECT_URLS = [
+    "https://cdn-learn.adafruit.com/downloads/zip/3194974/Metro/Metro_RP2350_Snake.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3195762/Metro/Metro_RP2350_Memory/memory_game.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3195805/Metro/Metro_RP2350_CircuitPython_Matrix.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3194658/Metro/Metro_RP2350_FlappyNyanCat.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3196927/Metro/Metro_RP2350_Match3/match3_game.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3194422/Metro/Metro_RP2350_Breakout.zip?timestamp={}",
+    # "",
+]
 
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
     # Get font name without extension
@@ -53,6 +65,10 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
                         # Skip the lib directory as we'll handle it separately
                         if 'lib/' in path:
                             continue
+                        if path.endswith("/"):
+                            # skip directories, they will get created by
+                            # mkdir(parents=True) below
+                            continue
                         
                         # Get the relative path from code_dir
                         rel_path = path[len(code_dir):]
@@ -97,7 +113,22 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
         # Clean up temporary directory
         shutil.rmtree(temp_dir, ignore_errors=True)
 
+
+def download_learn_projects():
+    for url in LEARN_PROJECT_URLS:
+        response = requests.get(url.format(int(time.time())), allow_redirects=True)
+        resp_url = response.url
+        #print(resp_url)
+        filename = resp_url.split("/")[-1].split("?")[0]
+        with open(f"learn-projects/{filename}", 'wb') as f:
+            f.write(response.content)
+
+
 def main():
+
+    # download all learn project zips
+    download_learn_projects()
+
     # Get the project root directory
     root_dir = Path(__file__).parent
     
