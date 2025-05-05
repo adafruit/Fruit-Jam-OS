@@ -8,6 +8,8 @@ loaded by adafruit_bitmap_font
 import array
 import atexit
 import json
+import math
+import os
 
 import displayio
 
@@ -23,7 +25,46 @@ from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload
 import adafruit_usb_host_descriptors
 from adafruit_anchored_group import AnchoredGroup
+from adafruit_fruitjam.peripherals import request_display_config
+from argv_file_helper import argv_filename
 
+"""
+desktop launcher code.py arguments
+
+  0: next code files
+1-N: args to pass to next code file
+
+"""
+try:
+    arg_file = argv_filename(__file__)
+    print(f"arg files: {arg_file}")
+    with open(arg_file, "r") as f:
+        args = json.load(f)
+    os.remove(arg_file)
+    next_code_file = None
+    remaining_args = None
+
+    if len(args) > 0:
+        next_code_file = args[0]
+    if len(args) > 1:
+        remaining_args = args[1:]
+
+    if remaining_args is not None:
+        next_code_argv_filename = argv_filename(next_code_file)
+        with open(next_code_argv_filename, "w") as f:
+            f.write(json.dumps(remaining_args))
+
+    next_code_file = next_code_file
+    supervisor.set_next_code_file(next_code_file)
+    print(f"launching: {next_code_file}")
+    supervisor.reload()
+    # os.rename("/saves/.boot_py_argv", "/saves/.not_boot_py_argv")
+
+except OSError:
+    # no args, just launch desktop
+    pass
+
+request_display_config(720, 400)
 display = supervisor.runtime.display
 
 scale = 1
@@ -101,9 +142,11 @@ for device in usb.core.find(find_all=True):
     #
     # # assume the device is the mouse
     # mouse = device
-    mouse_interface_index, mouse_endpoint_address = adafruit_usb_host_descriptors.find_boot_mouse_endpoint(device)
-    if mouse_interface_index is not None and mouse_endpoint_address is not None:
+    _possible_interface_index, _possible_endpoint_address = adafruit_usb_host_descriptors.find_boot_mouse_endpoint(device)
+    if _possible_interface_index is not None and _possible_endpoint_address is not None:
         mouse = device
+        mouse_interface_index = _possible_interface_index
+        mouse_endpoint_address = _possible_endpoint_address
         print(f"mouse interface: {mouse_interface_index} endpoint_address: {hex(mouse_endpoint_address)}")
 
 mouse_was_attached = None
@@ -168,7 +211,7 @@ menu_grid = GridLayout(x=40, y=16, width=WIDTH, height=HEIGHT, grid_size=(config
                        divider_lines=False)
 main_group.append(menu_grid)
 
-menu_title_txt = Label(font, text=config["menu_title"])
+menu_title_txt = Label(font, text="Fruit Jam OS")
 menu_title_txt.anchor_point = (0.5, 0.5)
 menu_title_txt.anchored_position = (display.width // (2 * scale), 2)
 main_group.append(menu_title_txt)
@@ -181,10 +224,9 @@ i = 0
 pages = [{}]
 
 cur_file_index = 0
-cur_page = 0
+
 for path in app_path.iterdir():
     print(path)
-    cell_group = AnchoredGroup()
 
     code_file = path / "code.py"
     if not code_file.exists():
@@ -216,23 +258,97 @@ for path in app_path.iterdir():
         "icon": str(icon_file.absolute()) if icon_file is not None else None,
         "file": str(code_file.absolute())
     })
-    if apps[-1]["icon"] is None:
+    i += 1
+def reuse_cell(grid_coords):
+    try:
+        cell_group = menu_grid.get_content(grid_coords)
+        return cell_group
+    except KeyError:
+        return None
+
+
+def _create_cell_group(app):
+    cell_group = AnchoredGroup()
+
+    if app["icon"] is None:
         icon_tg = displayio.TileGrid(bitmap=default_icon_bmp, pixel_shader=default_icon_palette)
         cell_group.append(icon_tg)
     else:
-        icon_bmp, icon_palette = adafruit_imageload.load(apps[-1]["icon"])
+        icon_bmp, icon_palette = adafruit_imageload.load(app["icon"])
         icon_tg = displayio.TileGrid(bitmap=icon_bmp, pixel_shader=icon_palette)
         cell_group.append(icon_tg)
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
-    title_txt = TextBox(font, text=apps[-1]["title"], width=WIDTH // config["width"], height=18,
+    title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
                         align=TextBox.ALIGN_CENTER)
     cell_group.append(title_txt)
     title_txt.anchor_point = (0, 0)
     title_txt.anchored_position = (0, icon_tg.y + icon_tg.tile_height)
-    app_titles.append(title_txt)
-    menu_grid.add_content(cell_group, grid_position=(i % config["width"], i // config["width"]), cell_size=(1, 1))
-    i += 1
+    return cell_group
+
+
+def _reuse_cell_group(app, cell_group):
+    _unhide_cell_group(cell_group)
+    if app["icon"] is None:
+        icon_tg = cell_group[0]
+        icon_tg.bitmap = default_icon_bmp
+        icon_tg.pixel_shader = default_icon_palette
+    else:
+        icon_bmp, icon_palette = adafruit_imageload.load(app["icon"])
+        icon_tg = cell_group[0]
+        icon_tg.bitmap = icon_bmp
+        icon_tg.pixel_shader = icon_palette
+
+    icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
+    # title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
+    #                     align=TextBox.ALIGN_CENTER)
+    # cell_group.append(title_txt)
+    title_txt = cell_group[1]
+    title_txt.text = app["title"]
+    # title_txt.anchor_point = (0, 0)
+    # title_txt.anchored_position = (0, icon_tg.y + icon_tg.tile_height)
+
+
+def _hide_cell_group(cell_group):
+    # hide the tilegrid
+    cell_group[0].hidden = True
+    # set the title to blank space
+    cell_group[1].text = "      "
+
+
+def _unhide_cell_group(cell_group):
+    # show tilegrid
+    cell_group[0].hidden = False
+
+
+def display_page(page_index):
+    for grid_index in range(6):
+        grid_pos = (grid_index % config["width"], grid_index // config["width"])
+        try:
+            cur_app = apps[grid_index + (page_index * 6)]
+        except IndexError:
+            try:
+                cell_group = menu_grid.get_content(grid_pos)
+                _hide_cell_group(cell_group)
+            except KeyError:
+                pass
+
+            # skip to the next for loop iteration
+            continue
+
+        try:
+            cell_group = menu_grid.get_content(grid_pos)
+            _reuse_cell_group(cur_app, cell_group)
+        except KeyError:
+            cell_group = _create_cell_group(cur_app)
+            menu_grid.add_content(cell_group, grid_position=grid_pos, cell_size=(1, 1))
+
+        # app_titles.append(title_txt)
+        print(f"{grid_index} | {grid_index % config["width"], grid_index // config["width"]}")
+
+
+cur_page = 0
+display_page(cur_page)
 
 left_bmp, left_palette = adafruit_imageload.load("launcher_assets/arrow_left.bmp")
 left_palette.make_transparent(0)
@@ -246,14 +362,17 @@ left_tg.anchored_position = (4, (display.height // 2 // scale) - 2)
 right_tg = AnchoredTileGrid(bitmap=right_bmp, pixel_shader=right_palette)
 right_tg.anchor_point = (1.0, 0.5)
 right_tg.anchored_position = ((display.width // scale) - 4, (display.height // 2 // scale) - 2)
+original_arrow_btn_color = left_palette[2]
 
 main_group.append(left_tg)
 main_group.append(right_tg)
 
+if len(apps) <= 6:
+    right_tg.hidden = True
+    left_tg.hidden = True
+
 if mouse:
     main_group.append(mouse_tg)
-
-selected = 0
 
 
 def atexit_callback():
@@ -265,27 +384,127 @@ def atexit_callback():
     if mouse_was_attached and not mouse.is_kernel_driver_active(0):
         mouse.attach_kernel_driver(0)
 
+
 atexit.register(atexit_callback)
 
-# print(f"apps: {apps}")
+selected = None
+
+
+def change_selected(new_selected):
+    global selected
+    # tuple means an item in the grid is selected
+    if isinstance(selected, tuple):
+        menu_grid.get_content(selected)[1].background_color = None
+
+    # TileGrid means arrow is selected
+    elif isinstance(selected, AnchoredTileGrid):
+        selected.pixel_shader[2] = original_arrow_btn_color
+
+    # tuple means an item in the grid is selected
+    if isinstance(new_selected, tuple):
+        menu_grid.get_content(new_selected)[1].background_color = 0x008800
+    # TileGrid means arrow is selected
+    elif isinstance(new_selected, AnchoredTileGrid):
+        new_selected.pixel_shader[2] = 0x008800
+    selected = new_selected
+
+
+change_selected((0, 0))
+
+
+def handle_key_press(key):
+    global index, editor_index, cur_page
+    # print(key)
+    # up key
+    if key == "\x1b[A":
+        if isinstance(selected, tuple):
+            change_selected((selected[0], (selected[1] - 1) % 2))
+        elif selected is left_tg:
+            change_selected((0, 0))
+        elif selected is right_tg:
+            change_selected((2, 0))
+
+
+    # down key
+    elif key == "\x1b[B":
+        if isinstance(selected, tuple):
+            change_selected((selected[0], (selected[1] + 1) % 2))
+        elif selected is left_tg:
+            change_selected((0, 1))
+        elif selected is right_tg:
+            change_selected((2, 1))
+        # selected = min(len(config["apps"]) - 1, selected + 1)
+
+    # left key
+    elif key == "\x1b[D":
+        if isinstance(selected, tuple):
+            if selected[0] >= 1:
+                change_selected((selected[0] - 1, selected[1]))
+            elif not left_tg.hidden:
+                change_selected(left_tg)
+            else:
+                change_selected(((selected[0] - 1) % 3, selected[1]))
+        elif selected is left_tg:
+            change_selected(right_tg)
+        elif selected is right_tg:
+            change_selected((2, 0))
+
+    # right key
+    elif key == "\x1b[C":
+        if isinstance(selected, tuple):
+            if selected[0] <= 1:
+                change_selected((selected[0] + 1, selected[1]))
+            elif not right_tg.hidden:
+                change_selected(right_tg)
+            else:
+                change_selected(((selected[0] + 1) % 3, selected[1]))
+        elif selected is left_tg:
+            change_selected((0, 0))
+        elif selected is right_tg:
+            change_selected(left_tg)
+
+    elif key == "\n":
+        if isinstance(selected, tuple):
+            index = (selected[1] * 3 + selected[0]) + (cur_page * 6)
+            if index >= len(apps):
+                index = None
+            print("go!")
+        elif selected is left_tg:
+            if cur_page > 0:
+                cur_page -= 1
+                display_page(cur_page)
+
+        elif selected is right_tg:
+            if cur_page < math.ceil(len(apps) / 6) - 1:
+                cur_page += 1
+                display_page(cur_page)
+
+    elif key == "e":
+        if isinstance(selected, tuple):
+            editor_index = (selected[1] * 3 + selected[0]) + (cur_page * 6)
+            if editor_index >= len(apps):
+                editor_index = None
+
+            print("go!")
+    else:
+        print(f"unhandled key: {repr(key)}")
+
+
+print(f"apps: {apps}")
+print(mouse_interface_index, mouse_endpoint_address)
 while True:
     index = None
+    editor_index = None
 
     available = supervisor.runtime.serial_bytes_available
     if available:
         c = sys.stdin.read(available)
         print(repr(c))
-        app_titles[selected].background_color = None
+        # app_titles[selected].background_color = None
 
-        if c == "\x1b[A":
-            selected = max(0, selected - 1)
-        elif c == "\x1b[B":
-            selected = min(len(config["apps"]) - 1, selected + 1)
-        elif c == "\n":
-            index = selected
-            print("go!")
+        handle_key_press(c)
         print("selected", selected)
-        app_titles[selected].background_color = 0x008800
+        # app_titles[selected].background_color = 0x008800
 
     if mouse:
         try:
@@ -304,17 +523,27 @@ while True:
             mouse_tg.y = max(0, min((display.height // scale) - 1, mouse_tg.y + mouse_buf[2]))
 
             if mouse_buf[0] & (1 << 0) != 0:
+                print("left click")
                 clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
                 if clicked_cell is not None:
                     index = clicked_cell[1] * config["width"] + clicked_cell[0]
 
     if index is not None:
-        # print("index", index)
-        # print(f"selected: {apps[index]}")
+        print("index", index)
+        print(f"selected: {apps[index]}")
         launch_file = apps[index]["file"]
-        supervisor.set_next_code_file(launch_file, sticky_on_reload=True, reload_on_error=True,
+        supervisor.set_next_code_file(launch_file, sticky_on_reload=False, reload_on_error=True,
                                       working_directory="/".join(launch_file.split("/")[:-1]))
+        supervisor.reload()
+    if editor_index is not None:
+        print("editor_index", editor_index)
+        print(f"editor selected: {apps[editor_index]}")
+        edit_file = apps[editor_index]["file"]
 
-        if mouse and not mouse.is_kernel_driver_active(0):
-            mouse.attach_kernel_driver(0)
+        launch_file = "/code_editor.py"
+        with open(argv_filename(launch_file), "w") as f:
+            f.write(json.dumps([apps[editor_index]["file"]]))
+
+        supervisor.set_next_code_file(launch_file, sticky_on_reload=False, reload_on_error=True,
+                                      working_directory="/".join(launch_file.split("/")[:-1]))
         supervisor.reload()
