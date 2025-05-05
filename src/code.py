@@ -26,7 +26,7 @@ import adafruit_imageload
 import adafruit_usb_host_descriptors
 from adafruit_anchored_group import AnchoredGroup
 from adafruit_fruitjam.peripherals import request_display_config
-from argv_file_helper import argv_filename
+from adafruit_argv_file import read_argv, write_argv
 
 """
 desktop launcher code.py arguments
@@ -35,34 +35,24 @@ desktop launcher code.py arguments
 1-N: args to pass to next code file
 
 """
-try:
-    arg_file = argv_filename(__file__)
-    print(f"arg files: {arg_file}")
-    with open(arg_file, "r") as f:
-        args = json.load(f)
-    os.remove(arg_file)
+
+args = read_argv(__file__)
+if args is not None and len(args) > 0:
     next_code_file = None
     remaining_args = None
-
     if len(args) > 0:
         next_code_file = args[0]
     if len(args) > 1:
         remaining_args = args[1:]
 
     if remaining_args is not None:
-        next_code_argv_filename = argv_filename(next_code_file)
-        with open(next_code_argv_filename, "w") as f:
-            f.write(json.dumps(remaining_args))
+        write_argv(next_code_file, remaining_args)
 
     next_code_file = next_code_file
-    supervisor.set_next_code_file(next_code_file)
+    supervisor.set_next_code_file(next_code_file, sticky_on_reload=False, reload_on_error=True,
+                                  working_directory="/".join(next_code_file.split("/")[:-1]))
     print(f"launching: {next_code_file}")
     supervisor.reload()
-    # os.rename("/saves/.boot_py_argv", "/saves/.not_boot_py_argv")
-
-except OSError:
-    # no args, just launch desktop
-    pass
 
 request_display_config(720, 400)
 display = supervisor.runtime.display
@@ -259,6 +249,8 @@ for path in app_path.iterdir():
         "file": str(code_file.absolute())
     })
     i += 1
+
+
 def reuse_cell(grid_coords):
     try:
         cell_group = menu_grid.get_content(grid_coords)
@@ -540,10 +532,9 @@ while True:
         print(f"editor selected: {apps[editor_index]}")
         edit_file = apps[editor_index]["file"]
 
-        launch_file = "/code_editor.py"
-        with open(argv_filename(launch_file), "w") as f:
-            f.write(json.dumps([apps[editor_index]["file"]]))
+        editor_launch_file = "apps/editor/code.py"
+        write_argv(editor_launch_file, [apps[editor_index]["file"]])
 
-        supervisor.set_next_code_file(launch_file, sticky_on_reload=False, reload_on_error=True,
-                                      working_directory="/".join(launch_file.split("/")[:-1]))
+        supervisor.set_next_code_file(editor_launch_file, sticky_on_reload=False, reload_on_error=True,
+                                      working_directory="/".join(editor_launch_file.split("/")[:-1]))
         supervisor.reload()
