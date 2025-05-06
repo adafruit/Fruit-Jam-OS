@@ -116,6 +116,16 @@ def clamp(x, lower, upper):
     return x
 
 
+def _count_leading_characters(text, char):
+    count = 0
+    for c in text:
+        if c == char:
+            count += 1
+        else:
+            break
+    return count
+
+
 class Cursor:
     def __init__(self, row=0, col=0, col_hint=None):
         self.row = row
@@ -220,18 +230,31 @@ def end(window, buffer, cursor):
 
 
 def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branches,too-many-statements
+
+    def _only_spaces_before(cursor):
+        i = cursor.col - 1
+        while i >= 0:
+            print(f"i: {i} chr: '{buffer.lines[cursor.row][i]}'")
+            if buffer.lines[cursor.row][i] != " ":
+                return False
+            i -= 1
+        return True
     if os_exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
             buffer = Buffer(f.read().splitlines())
     else:
         buffer = Buffer([""])
 
+    absolute_filepath = os.getcwd() + "/" + filename
+
     user_message = None
 
     window = Window(curses.LINES - 1, curses.COLS - 1)
     cursor = Cursor()
-    visible_cursor.text = buffer[0][0]
-    last_refresh_time = -1
+    try:
+        visible_cursor.text = buffer[0][0]
+    except IndexError:
+        visible_cursor.text = " "
 
     stdscr.erase()
 
@@ -258,10 +281,13 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
         row = curses.LINES - 1
 
         if user_message is None:
-            if util.readonly():
-                line = f"{filename:12} (mnt RO ^W) | ^R run | ^C: quit{gc_mem_free_hint()}"
+            if (not absolute_filepath.startswith("/saves/") and
+                    not absolute_filepath.startswith("/sd/") and
+                    util.readonly()):
+
+                line = f"{filename:12} (mnt RO ^W) | ^R run | ^P exit & picker | ^C: quit{gc_mem_free_hint()}"
             else:
-                line = f"{filename:12} (mnt RW ^W) | ^R run | ^S save | ^X: save & exit | ^C: exit no save{gc_mem_free_hint()}"
+                line = f"{filename:12} (mnt RW ^W) | ^R run | ^S save | ^X: save & exit | ^P exit & picker | ^C: exit no save{gc_mem_free_hint()}"
         else:
             line = user_message
             user_message = None
@@ -289,13 +315,16 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
                     print(row)
                 print("---- end file contents ----")
         elif k == "\x13":  # Ctrl-S
-            if not util.readonly():
+            if (absolute_filepath.startswith("/saves/") or
+                    absolute_filepath.startswith("/sd/") or
+                    util.readonly()):
+
                 with open(filename, "w", encoding="utf-8") as f:
                     for row in buffer:
                         f.write(f"{row}\n")
                     user_message = "Saved"
             else:
-                print("Unable to Save due to readonly mode!")
+                user_message = "Unable to Save due to readonly mode!"
         elif k == "\x11":  # Ctrl-Q
             print("ctrl-Q")
             for row in buffer:
@@ -314,6 +343,10 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
 
             supervisor.set_next_code_file(filename, sticky_on_reload=False, reload_on_error=True,
                                           working_directory=Path(filename).parent.absolute())
+            supervisor.reload()
+        elif k == "\x10":  # Ctrl-P
+            supervisor.set_next_code_file("/apps/editor/code.py", sticky_on_reload=False, reload_on_error=True,
+                                          working_directory="/apps/editor")
             supervisor.reload()
         elif k == "KEY_HOME":
             home(window, buffer, cursor)
@@ -344,8 +377,12 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
         elif k == "KEY_RIGHT":
             right(window, buffer, cursor)
         elif k == "\n":
+            leading_spaces = _count_leading_characters(buffer.lines[cursor.row], " ")
             buffer.split(cursor)
             right(window, buffer, cursor)
+            for i in range(leading_spaces):
+                buffer.insert(cursor, " ")
+                right(window, buffer, cursor)
         elif k in ("KEY_DELETE", "\x04"):
             print("delete")
             if cursor.row < len(buffer.lines) - 1 or \
@@ -359,8 +396,13 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
         elif k in ("KEY_BACKSPACE", "\x7f", "\x08"):
             print(f"backspace {bytes(k, 'utf-8')}")
             if (cursor.row, cursor.col) > (0, 0):
-                left(window, buffer, cursor)
-                buffer.delete(cursor)
+                if cursor.col > 0 and buffer.lines[cursor.row][cursor.col-1] == " " and _only_spaces_before(cursor):
+                    for i in range(4):
+                        left(window, buffer, cursor)
+                        buffer.delete(cursor)
+                else:
+                    left(window, buffer, cursor)
+                    buffer.delete(cursor)
 
         else:
             print(f"unhandled k: {k}")

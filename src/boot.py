@@ -1,7 +1,9 @@
+# SPDX-FileCopyrightText: 2025 Tim Cocks for Adafruit Industries
+# SPDX-License-Identifier: MIT
 import os
 
 import supervisor
-from argv_file_helper import argv_filename
+from adafruit_argv_file import read_argv, write_argv
 import json
 import storage
 
@@ -15,15 +17,10 @@ boot.py arguments
 2-N: args to pass to next code file
 
 """
-try:
-    arg_file = argv_filename(__file__)
-    print(f"arg files: {arg_file}")
-    with open(arg_file, "r") as f:
-        args = json.load(f)
 
-    print("args file found and loaded")
-    os.remove(arg_file)
-    print("args file removed")
+
+args = read_argv(__file__)
+if args is not None and len(args) > 0:
 
     readonly = args[0]
     next_code_file = None
@@ -35,20 +32,14 @@ try:
         remaining_args = args[2:]
 
     if remaining_args is not None:
-        next_code_argv_filename = argv_filename(next_code_file)
-        with open(next_code_argv_filename, "w") as f:
-            f.write(json.dumps(remaining_args))
-            print("next code args written")
+        write_argv(next_code_file, remaining_args)
 
-    print(f"setting storage readonly to: {readonly}")
+    # print(f"setting storage readonly to: {readonly}")
     storage.remount("/", readonly=readonly)
 
     next_code_file = next_code_file
-    supervisor.set_next_code_file(next_code_file)
-    print(f"launching: {next_code_file}")
-    # os.rename("/saves/.boot_py_argv", "/saves/.not_boot_py_argv")
+    supervisor.set_next_code_file(next_code_file, sticky_on_reload=False, reload_on_error=True,
+                                  working_directory="/".join(next_code_file.split("/")[:-1]))
 
-
-except OSError:
-    print("launching boot animation")
+else:
     supervisor.set_next_code_file("boot_animation.py")

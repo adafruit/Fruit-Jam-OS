@@ -1,9 +1,8 @@
-# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-FileCopyrightText: 2025 Tim Cocks for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
 """
-This example uses adafruit_display_text.label to display text using a custom font
-loaded by adafruit_bitmap_font
+Fruit Jam OS Launcher
 """
 import array
 import atexit
