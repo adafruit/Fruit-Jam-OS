@@ -12,7 +12,7 @@ LEARN_PROJECT_URLS = [
     "https://cdn-learn.adafruit.com/downloads/zip/3194658/Metro/Metro_RP2350_FlappyNyanCat.zip?timestamp={}",
     "https://cdn-learn.adafruit.com/downloads/zip/3196927/Metro/Metro_RP2350_Match3/match3_game.zip?timestamp={}",
     "https://cdn-learn.adafruit.com/downloads/zip/3194422/Metro/Metro_RP2350_Breakout.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3196755/Metro/Metro_RP2350_Chips_Challenge.zip?timestamp=1746112286",
+    "https://cdn-learn.adafruit.com/downloads/zip/3196755/Metro/Metro_RP2350_Chips_Challenge.zip?timestamp={}",
 ]
 
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
@@ -99,6 +99,9 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
                         # Write the file
                         with open(target, 'wb') as f:
                             f.write(source.read())
+
+        # copy builtin apps
+        shutil.copytree("builtin_apps", apps_dir, dirs_exist_ok=True)
         
         # Create the final zip file
         with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zf:

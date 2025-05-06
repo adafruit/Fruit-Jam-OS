@@ -9,7 +9,7 @@ from adafruit_bitmap_font import bitmap_font
 from adafruit_editor import editor, picker
 from tilepalettemapper import TilePaletteMapper
 import json
-from argv_file_helper import argv_filename
+from adafruit_argv_file import read_argv, write_argv
 from adafruit_fruitjam.peripherals import request_display_config
 
 request_display_config(720, 400)
@@ -44,19 +44,11 @@ visible_cursor.anchor_point = (0, 0)
 visible_cursor.anchored_position = (0, 0)
 main_group.append(visible_cursor)
 
-
 file = None
-try:
-    editor_argv_file = argv_filename(__file__)
-    with open(editor_argv_file, "r") as f:
-        argv_data = json.load(f)
-        file = argv_data[0]
-    os.remove(editor_argv_file)
-except OSError:
-    file = "boot_out.txt"
+args = read_argv(__file__)
+if args is not None and len(args) > 0:
+    file = args[0]
+else:
+    file = picker.pick_file(terminal)
 
-print(f"opening {file}")
 editor.edit(file, terminal, visible_cursor)
-print("after edit")
-# while True:
-#     pass
