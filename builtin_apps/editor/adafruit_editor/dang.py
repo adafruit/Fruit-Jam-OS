@@ -42,6 +42,7 @@ COLS = 120
 special_keys = {
     "\x1b": ...,  # all prefixes of special keys must be entered as Ellipsis
     "\x1b[": ...,
+    "\x1b[3": ...,
     "\x1b[5": ...,
     "\x1b[6": ...,
     "\x1b[A": "KEY_UP",

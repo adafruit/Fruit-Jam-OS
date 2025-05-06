@@ -15,11 +15,14 @@ import displayio
 
 import supervisor
 import sys
+
+import terminalio
 import usb
 import adafruit_pathlib as pathlib
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.text_box import TextBox
 from adafruit_display_text.bitmap_label import Label
+
 from adafruit_displayio_layout.layouts.grid_layout import GridLayout
 from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload
@@ -63,14 +66,18 @@ if display.width > 360:
 
 font_file = "/fonts/terminal.lvfontbin"
 font = bitmap_font.load_font(font_file)
-main_group = displayio.Group(scale=scale)
+scaled_group = displayio.Group(scale=scale)
+
+main_group = displayio.Group()
+main_group.append(scaled_group)
+
 display.root_group = main_group
 
 background_bmp = displayio.Bitmap(display.width, display.height, 1)
 bg_palette = displayio.Palette(1)
 bg_palette[0] = 0x222222
 bg_tg = displayio.TileGrid(bitmap=background_bmp, pixel_shader=bg_palette)
-main_group.append(bg_tg)
+scaled_group.append(bg_tg)
 
 # load the mouse cursor bitmap
 mouse_bmp = displayio.OnDiskBitmap("launcher_assets/mouse_cursor.bmp")
@@ -199,12 +206,12 @@ default_icon_bmp, default_icon_palette = adafruit_imageload.load("launcher_asset
 default_icon_palette.make_transparent(0)
 menu_grid = GridLayout(x=40, y=16, width=WIDTH, height=HEIGHT, grid_size=(config["width"], config["height"]),
                        divider_lines=False)
-main_group.append(menu_grid)
+scaled_group.append(menu_grid)
 
 menu_title_txt = Label(font, text="Fruit Jam OS")
 menu_title_txt.anchor_point = (0.5, 0.5)
 menu_title_txt.anchored_position = (display.width // (2 * scale), 2)
-main_group.append(menu_title_txt)
+scaled_group.append(menu_title_txt)
 
 app_titles = []
 apps = []
@@ -248,6 +255,7 @@ for path in app_path.iterdir():
         "icon": str(icon_file.absolute()) if icon_file is not None else None,
         "file": str(code_file.absolute())
     })
+
     i += 1
 
 
@@ -356,15 +364,26 @@ right_tg.anchor_point = (1.0, 0.5)
 right_tg.anchored_position = ((display.width // scale) - 4, (display.height // 2 // scale) - 2)
 original_arrow_btn_color = left_palette[2]
 
-main_group.append(left_tg)
-main_group.append(right_tg)
+scaled_group.append(left_tg)
+scaled_group.append(right_tg)
 
 if len(apps) <= 6:
     right_tg.hidden = True
     left_tg.hidden = True
 
 if mouse:
-    main_group.append(mouse_tg)
+    scaled_group.append(mouse_tg)
+
+
+help_txt = Label(terminalio.FONT, text="[Arrow]: Move\n[E]:     Edit\n[Enter]:  Run")
+# help_txt = TextBox(terminalio.FONT, width=88, height=30, align=TextBox.ALIGN_RIGHT, background_color=0x008800, text="[E]: Edit\n[Enter]:  Run")
+help_txt.anchor_point = (0, 0)
+
+help_txt.anchored_position = (2, 2)
+# help_txt.anchored_position = (display.width - 89, 1)
+
+print(help_txt.bounding_box)
+main_group.append(help_txt)
 
 
 def atexit_callback():
@@ -534,6 +553,8 @@ while True:
 
         editor_launch_file = "apps/editor/code.py"
         write_argv(editor_launch_file, [apps[editor_index]["file"]])
+        # with open(argv_filename(launch_file), "w") as f:
+        #     f.write(json.dumps([apps[editor_index]["file"]]))
 
         supervisor.set_next_code_file(editor_launch_file, sticky_on_reload=False, reload_on_error=True,
                                       working_directory="/".join(editor_launch_file.split("/")[:-1]))

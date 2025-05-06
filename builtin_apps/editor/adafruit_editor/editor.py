@@ -23,6 +23,7 @@ from argv_file_helper import argv_filename
 #     usb_cdc.data.write(f"{message}\r\n".encode("utf-8"))
 
 INPUT_DISPLAY_REFRESH_COOLDOWN = 0.3  # s
+SHOW_MEMFREE = False
 
 
 class MaybeDisableReload:
@@ -55,7 +56,8 @@ def os_exists(filename):
 
 
 def gc_mem_free_hint():
-    return ""
+    if not SHOW_MEMFREE:
+        return ""
     if hasattr(gc, "mem_free"):
         gc.collect()
         return f" | free: {gc.mem_free()}"
@@ -224,16 +226,12 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
     else:
         buffer = Buffer([""])
 
+    user_message = None
+
     window = Window(curses.LINES - 1, curses.COLS - 1)
     cursor = Cursor()
     visible_cursor.text = buffer[0][0]
     last_refresh_time = -1
-    # print("updating visible cursor")
-    # visible_cursor.anchored_position = ((0 * 6) - 1, (0 * 12) + 20)
-    # try:
-    #     visible_cursor.text = buffer.lines[0][0]
-    # except IndexError:
-    #     visible_cursor.text = " "
 
     stdscr.erase()
 
@@ -258,10 +256,15 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
         for row in range(lastrow + 1, window.n_rows):
             setline(row, "~~ EOF ~~")
         row = curses.LINES - 1
-        if util.readonly():
-            line = f"{filename:12} (*ro) | ^C: quit{gc_mem_free_hint()}"
+
+        if user_message is None:
+            if util.readonly():
+                line = f"{filename:12} (mnt RO ^W) | ^R run | ^C: quit{gc_mem_free_hint()}"
+            else:
+                line = f"{filename:12} (mnt RW ^W) | ^R run | ^S save | ^X: save & exit | ^C: exit no save{gc_mem_free_hint()}"
         else:
-            line = f"{filename:12} | ^X: write & exit | ^C: quit w/o save{gc_mem_free_hint()}"
+            line = user_message
+            user_message = None
         setline(row, line)
 
         stdscr.move(*window.translate(cursor))
@@ -285,23 +288,24 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
                 for row in buffer:
                     print(row)
                 print("---- end file contents ----")
-        elif k == "\x13": # Ctrl-S
+        elif k == "\x13":  # Ctrl-S
             if not util.readonly():
                 with open(filename, "w", encoding="utf-8") as f:
                     for row in buffer:
                         f.write(f"{row}\n")
+                    user_message = "Saved"
             else:
                 print("Unable to Save due to readonly mode!")
         elif k == "\x11":  # Ctrl-Q
             print("ctrl-Q")
             for row in buffer:
                 print(row)
-        elif k == "\x17": # Ctrl-W
+        elif k == "\x17":  # Ctrl-W
             boot_args_file = argv_filename("/boot.py")
             with open(boot_args_file, "w") as f:
                 f.write(json.dumps([not util.readonly(), "/apps/editor/code.py", Path(filename).absolute()]))
             microcontroller.reset()
-        elif k == "\x12": # Ctrl-R
+        elif k == "\x12":  # Ctrl-R
             print(f"Run: {filename}")
 
             launcher_code_args_file = argv_filename("/code.py")
@@ -344,7 +348,13 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
             right(window, buffer, cursor)
         elif k in ("KEY_DELETE", "\x04"):
             print("delete")
-            buffer.delete(cursor)
+            if cursor.row < len(buffer.lines) - 1 or \
+                    cursor.col < len(buffer.lines[cursor.row]):
+                buffer.delete(cursor)
+                try:
+                    visible_cursor.text = buffer.lines[cursor.row][cursor.col]
+                except IndexError:
+                    visible_cursor.text = " "
 
         elif k in ("KEY_BACKSPACE", "\x7f", "\x08"):
             print(f"backspace {bytes(k, 'utf-8')}")
