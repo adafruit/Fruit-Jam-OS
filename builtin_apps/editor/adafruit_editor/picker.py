@@ -135,12 +135,13 @@ def terminal_input(stdscr, message):
     input_str_list = []
     k = stdscr.getkey()
     while k != "\n":
-        if len(k) == 1 and " " <= k <= "~":
-            input_str_list.append(k)
-            stdscr.addstr(0, len(message) + len(input_str_list) - 1, k)
-        elif k == "\x08":
-            input_str_list.pop(len(input_str_list) - 1)
-            stdscr.addstr(0, len(message) + len(input_str_list) - 1, k)
+        if k is not None:
+            if len(k) == 1 and " " <= k <= "~":
+                input_str_list.append(k)
+                stdscr.addstr(0, len(message) + len(input_str_list) - 1, k)
+            elif k == "\x08":
+                input_str_list.pop(len(input_str_list) - 1)
+                stdscr.addstr(0, len(message) + len(input_str_list) - 1, k)
         k = stdscr.getkey()
     # submit after enter pressed
     return "".join(input_str_list)
@@ -149,6 +150,7 @@ def terminal_input(stdscr, message):
 # pylint: disable=inconsistent-return-statements
 def new_file(stdscr):
     stdscr.erase()
+    print(f"cwd inside new_file(): {os.getcwd()}")
     new_file_name = terminal_input(stdscr, "New File Name: ")
     if os_exists(new_file_name):
         stdscr.addstr(1,0, "Error: File Already Exists")

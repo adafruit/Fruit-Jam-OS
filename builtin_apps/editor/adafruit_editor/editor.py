@@ -229,7 +229,7 @@ def end(window, buffer, cursor):
     window.horizontal_scroll(cursor)
 
 
-def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branches,too-many-statements
+def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: disable=too-many-branches,too-many-statements
 
     def _only_spaces_before(cursor):
         i = cursor.col - 1
@@ -244,17 +244,25 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
             buffer = Buffer(f.read().splitlines())
     else:
         buffer = Buffer([""])
-
-    absolute_filepath = os.getcwd() + "/" + filename
+    print(f"cwd: {os.getcwd()} | {os.getcwd() == "/apps/editor"}")
+    if os.getcwd() != "/apps/editor" and os.getcwd() != "/":
+        absolute_filepath = os.getcwd() + "/" + filename
+    else:
+        absolute_filepath = filename
 
     user_message = None
+    user_message_shown_time = -1
+
+    clicked_tile_coords = [None, None]
 
     window = Window(curses.LINES - 1, curses.COLS - 1)
     cursor = Cursor()
-    try:
-        visible_cursor.text = buffer[0][0]
-    except IndexError:
-        visible_cursor.text = " "
+    terminal_tilegrid.pixel_shader[cursor.col,cursor.row] = [1, 0]
+    old_cursor_pos = (cursor.col, cursor.row)
+    # try:
+    #     visible_cursor.text = buffer[0][0]
+    # except IndexError:
+    #     visible_cursor.text = " "
 
     stdscr.erase()
 
@@ -267,6 +275,7 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
         line += " " * (window.n_cols - len(line))
         stdscr.addstr(row, 0, line)
 
+    print(f"cwd: {os.getcwd()} | abs path: {absolute_filepath} | filename: {filename}")
     while True:
         lastrow = 0
         for row, line in enumerate(buffer[window.row: window.row + window.n_rows]):
@@ -285,148 +294,179 @@ def editor(stdscr, filename, visible_cursor):  # pylint: disable=too-many-branch
                     not absolute_filepath.startswith("/sd/") and
                     util.readonly()):
 
-                line = f"{filename:12} (mnt RO ^W) | ^R run | ^P exit & picker | ^C: quit{gc_mem_free_hint()}"
+                line = f"{absolute_filepath:12} (mnt RO ^W) | ^R run | ^O Open | ^C: quit{gc_mem_free_hint()}"
             else:
-                line = f"{filename:12} (mnt RW ^W) | ^R run | ^S save | ^X: save & exit | ^P exit & picker | ^C: exit no save{gc_mem_free_hint()}"
+                line = f"{absolute_filepath:12} (mnt RW ^W) | ^R run | ^O Open  | ^S save | ^X: save & exit | ^C: exit no save{gc_mem_free_hint()}"
         else:
             line = user_message
-            user_message = None
+            if user_message_shown_time + 3.0 < time.monotonic():
+                user_message = None
         setline(row, line)
 
         stdscr.move(*window.translate(cursor))
-        old_cursor_pos = (cursor.col, cursor.row)
+
         # display.refresh(minimum_frames_per_second=20)
         k = stdscr.getkey()
-        # print(repr(k))
-        if len(k) == 1 and " " <= k <= "~":
-            buffer.insert(cursor, k)
-            for _ in k:
-                right(window, buffer, cursor)
-        elif k == "\x18":  # ctrl-x
-            if not util.readonly():
-                with open(filename, "w", encoding="utf-8") as f:
+        if k is not None:
+            # print(repr(k))
+            if len(k) == 1 and " " <= k <= "~":
+                buffer.insert(cursor, k)
+                for _ in k:
+                    right(window, buffer, cursor)
+            elif k == "\x18":  # ctrl-x
+                if not util.readonly():
+                    with open(filename, "w", encoding="utf-8") as f:
+                        for row in buffer:
+                            f.write(f"{row}\n")
+                    return
+                else:
+                    print("Unable to Save due to readonly mode! File Contents:")
+                    print("---- begin file contents ----")
                     for row in buffer:
-                        f.write(f"{row}\n")
-                return
-            else:
-                print("Unable to Save due to readonly mode! File Contents:")
-                print("---- begin file contents ----")
+                        print(row)
+                    print("---- end file contents ----")
+            elif k == "\x13":  # Ctrl-S
+                print(absolute_filepath)
+                print(f"starts with saves: {absolute_filepath.startswith("/saves/")}")
+                print(f"stars saves: {absolute_filepath.startswith("/saves/")}")
+                print(f"stars sd: {absolute_filepath.startswith("/sd/")}")
+                print(f"readonly: {util.readonly()}")
+                if (absolute_filepath.startswith("/saves/") or
+                        absolute_filepath.startswith("/sd/") or
+                        not util.readonly()):
+
+                    with open(absolute_filepath, "w", encoding="utf-8") as f:
+                        for row in buffer:
+                            f.write(f"{row}\n")
+                        user_message = "Saved"
+                        user_message_shown_time = time.monotonic()
+                else:
+                    user_message = "Unable to Save due to readonly mode!"
+                    user_message_shown_time = time.monotonic()
+            elif k == "\x11":  # Ctrl-Q
+                print("ctrl-Q")
                 for row in buffer:
                     print(row)
-                print("---- end file contents ----")
-        elif k == "\x13":  # Ctrl-S
-            if (absolute_filepath.startswith("/saves/") or
-                    absolute_filepath.startswith("/sd/") or
-                    util.readonly()):
+            elif k == "\x17":  # Ctrl-W
+                boot_args_file = argv_filename("/boot.py")
+                with open(boot_args_file, "w") as f:
+                    f.write(json.dumps([not util.readonly(), "/apps/editor/code.py", Path(filename).absolute()]))
+                microcontroller.reset()
+            elif k == "\x12":  # Ctrl-R
+                print(f"Run: {filename}")
 
-                with open(filename, "w", encoding="utf-8") as f:
-                    for row in buffer:
-                        f.write(f"{row}\n")
-                    user_message = "Saved"
-            else:
-                user_message = "Unable to Save due to readonly mode!"
-        elif k == "\x11":  # Ctrl-Q
-            print("ctrl-Q")
-            for row in buffer:
-                print(row)
-        elif k == "\x17":  # Ctrl-W
-            boot_args_file = argv_filename("/boot.py")
-            with open(boot_args_file, "w") as f:
-                f.write(json.dumps([not util.readonly(), "/apps/editor/code.py", Path(filename).absolute()]))
-            microcontroller.reset()
-        elif k == "\x12":  # Ctrl-R
-            print(f"Run: {filename}")
+                launcher_code_args_file = argv_filename("/code.py")
+                with open(launcher_code_args_file, "w") as f:
+                    f.write(json.dumps(["/apps/editor/code.py", Path(filename).absolute()]))
 
-            launcher_code_args_file = argv_filename("/code.py")
-            with open(launcher_code_args_file, "w") as f:
-                f.write(json.dumps(["/apps/editor/code.py", Path(filename).absolute()]))
+                supervisor.set_next_code_file(filename, sticky_on_reload=False, reload_on_error=True,
+                                              working_directory=Path(filename).parent.absolute())
+                supervisor.reload()
+            elif k == "\x0f":  # Ctrl-O
 
-            supervisor.set_next_code_file(filename, sticky_on_reload=False, reload_on_error=True,
-                                          working_directory=Path(filename).parent.absolute())
-            supervisor.reload()
-        elif k == "\x10":  # Ctrl-P
-            supervisor.set_next_code_file("/apps/editor/code.py", sticky_on_reload=False, reload_on_error=True,
-                                          working_directory="/apps/editor")
-            supervisor.reload()
-        elif k == "KEY_HOME":
-            home(window, buffer, cursor)
-        elif k == "KEY_END":
-            end(window, buffer, cursor)
-        elif k == "KEY_LEFT":
-            left(window, buffer, cursor)
-        elif k == "KEY_DOWN":
+                supervisor.set_next_code_file("/apps/editor/code.py", sticky_on_reload=False, reload_on_error=True,
+                                              working_directory="/apps/editor")
+                supervisor.reload()
 
-            cursor.down(buffer)
-            window.down(buffer, cursor)
-            window.horizontal_scroll(cursor)
-            print(f"scroll pos: {window.row}")
-        elif k == "KEY_PGDN":
-            for _ in range(window.n_rows):
+
+            elif k == "KEY_HOME":
+                home(window, buffer, cursor)
+            elif k == "KEY_END":
+                end(window, buffer, cursor)
+            elif k == "KEY_LEFT":
+                left(window, buffer, cursor)
+            elif k == "KEY_DOWN":
+
                 cursor.down(buffer)
                 window.down(buffer, cursor)
                 window.horizontal_scroll(cursor)
-        elif k == "KEY_UP":
-            cursor.up(buffer)
-            window.up(cursor)
-            window.horizontal_scroll(cursor)
-        elif k == "KEY_PGUP":
-            for _ in range(window.n_rows):
+                print(f"scroll pos: {window.row}")
+            elif k == "KEY_PGDN":
+                for _ in range(window.n_rows):
+                    cursor.down(buffer)
+                    window.down(buffer, cursor)
+                    window.horizontal_scroll(cursor)
+            elif k == "KEY_UP":
                 cursor.up(buffer)
                 window.up(cursor)
                 window.horizontal_scroll(cursor)
-        elif k == "KEY_RIGHT":
-            right(window, buffer, cursor)
-        elif k == "\n":
-            leading_spaces = _count_leading_characters(buffer.lines[cursor.row], " ")
-            buffer.split(cursor)
-            right(window, buffer, cursor)
-            for i in range(leading_spaces):
-                buffer.insert(cursor, " ")
+            elif k == "KEY_PGUP":
+                for _ in range(window.n_rows):
+                    cursor.up(buffer)
+                    window.up(cursor)
+                    window.horizontal_scroll(cursor)
+            elif k == "KEY_RIGHT":
                 right(window, buffer, cursor)
-        elif k in ("KEY_DELETE", "\x04"):
-            print("delete")
-            if cursor.row < len(buffer.lines) - 1 or \
-                    cursor.col < len(buffer.lines[cursor.row]):
-                buffer.delete(cursor)
-                try:
-                    visible_cursor.text = buffer.lines[cursor.row][cursor.col]
-                except IndexError:
-                    visible_cursor.text = " "
+            elif k == "\n":
+                leading_spaces = _count_leading_characters(buffer.lines[cursor.row], " ")
+                buffer.split(cursor)
+                right(window, buffer, cursor)
+                for i in range(leading_spaces):
+                    buffer.insert(cursor, " ")
+                    right(window, buffer, cursor)
+            elif k in ("KEY_DELETE", "\x04"):
+                print("delete")
+                if cursor.row < len(buffer.lines) - 1 or \
+                        cursor.col < len(buffer.lines[cursor.row]):
+                    buffer.delete(cursor)
+                    # try:
+                    #     visible_cursor.text = buffer.lines[cursor.row][cursor.col]
+                    # except IndexError:
+                    #     visible_cursor.text = " "
 
-        elif k in ("KEY_BACKSPACE", "\x7f", "\x08"):
-            print(f"backspace {bytes(k, 'utf-8')}")
-            if (cursor.row, cursor.col) > (0, 0):
-                if cursor.col > 0 and buffer.lines[cursor.row][cursor.col-1] == " " and _only_spaces_before(cursor):
-                    for i in range(4):
+            elif k in ("KEY_BACKSPACE", "\x7f", "\x08"):
+                print(f"backspace {bytes(k, 'utf-8')}")
+                if (cursor.row, cursor.col) > (0, 0):
+                    if cursor.col > 0 and buffer.lines[cursor.row][cursor.col-1] == " " and _only_spaces_before(cursor):
+                        for i in range(4):
+                            left(window, buffer, cursor)
+                            buffer.delete(cursor)
+                    else:
                         left(window, buffer, cursor)
                         buffer.delete(cursor)
-                else:
-                    left(window, buffer, cursor)
-                    buffer.delete(cursor)
 
-        else:
-            print(f"unhandled k: {k}")
-            print(f"unhandled K: {ord(k)}")
-            print(f"unhandled k: {bytes(k, 'utf-8')}")
+            else:
+                print(f"unhandled k: {k}")
+                print(f"unhandled K: {ord(k)}")
+                print(f"unhandled k: {bytes(k, 'utf-8')}")
+
+
+        if mouse is not None:
+            pressed_btns = mouse.update()
+            if pressed_btns is not None and "left" in pressed_btns:
+                clicked_tile_coords[0] = mouse.x // 6
+                clicked_tile_coords[1] = mouse.y // 12
+
+                if clicked_tile_coords[0] > len(buffer.lines[clicked_tile_coords[1]]):
+                    clicked_tile_coords[0] = len(buffer.lines[clicked_tile_coords[1]])
+                cursor.row = clicked_tile_coords[1]
+                cursor.col = clicked_tile_coords[0]
+
+
         # print("updating visible cursor")
         # print(f"anchored pos: {((cursor.col * 6) - 1, (cursor.row * 12) + 20)}")
-        if old_cursor_pos != (cursor.col, cursor.row):
 
-            # terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]] = [0,1]
-            # terminal_tilegrid.pixel_shader[cursor.col, cursor.row] = [1,0]
+        if old_cursor_pos != (cursor.col, cursor.row):
+            # print(f"old cursor: {old_cursor_pos}, new: {(cursor.col, cursor.row)}")
+            terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]] = [0,1]
+            terminal_tilegrid.pixel_shader[cursor.col, cursor.row] = [1,0]
+            # print(f"old: {terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]]} new: {terminal_tilegrid.pixel_shader[cursor.col, cursor.row]}")
 
             # visible_cursor.anchored_position = ((cursor.col * 6) - 1, (cursor.row * 12) + 20)
-            visible_cursor.anchored_position = ((cursor.col * 6), ((cursor.row - window.row) * 12))
 
-            try:
-                visible_cursor.text = buffer.lines[cursor.row][cursor.col]
-            except IndexError:
-                visible_cursor.text = " "
+            # visible_cursor.anchored_position = ((cursor.col * 6), ((cursor.row - window.row) * 12))
+            #
+            # try:
+            #     visible_cursor.text = buffer.lines[cursor.row][cursor.col]
+            # except IndexError:
+            #     visible_cursor.text = " "
 
 
-def edit(filename, terminal=None, visible_cursor=None):
+        old_cursor_pos = (cursor.col, cursor.row)
+
+def edit(filename, terminal=None, mouse=None, terminal_tilegrid=None):
     with MaybeDisableReload():
         if terminal is None:
             return curses.wrapper(editor, filename)
         else:
-            return curses.custom_terminal_wrapper(terminal, editor, filename, visible_cursor)
+            return curses.custom_terminal_wrapper(terminal, editor, filename, mouse, terminal_tilegrid)
