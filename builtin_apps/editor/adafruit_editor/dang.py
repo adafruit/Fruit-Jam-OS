@@ -113,7 +113,9 @@ class Screen:
                     self._pending = pending[1:]
                     return pending[0]
             else:
-                c = self._terminal_read_blocking()
+                c = self._terminal_read_timeout(50)
+                if c is None:
+                    return None
             c = pending + c
 
             code = special_keys.get(c)

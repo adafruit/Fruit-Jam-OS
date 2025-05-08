@@ -4,6 +4,7 @@ import zipfile
 import shutil
 from pathlib import Path
 import requests
+from circup.commands import main as circup_cli
 
 LEARN_PROJECT_URLS = [
     "https://cdn-learn.adafruit.com/downloads/zip/3194974/Metro/Metro_RP2350_Snake.zip?timestamp={}",
@@ -102,7 +103,11 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
 
         # copy builtin apps
         shutil.copytree("builtin_apps", apps_dir, dirs_exist_ok=True)
-        
+        shutil.copyfile("mock_boot_out.txt", temp_dir / "boot_out.txt")
+        for builtin_app_dir in os.listdir("builtin_apps"):
+            circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"apps/{builtin_app_dir}/code.py"],
+                       standalone_mode=False)
+        os.remove(temp_dir / "boot_out.txt")
         # Create the final zip file
         with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
             for file_path in temp_dir.rglob("*"):

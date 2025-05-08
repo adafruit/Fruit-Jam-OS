@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 import os
+import time
+
 import usb_cdc
 from . import dang as curses
 from . import util
@@ -115,23 +117,57 @@ def picker(stdscr, options, notes=(), start_idx=0):
 
         # ctrl-N
         elif k == "\x0E":
-            if not util.readonly():
+            # if not util.readonly():
                 new_file_name = new_file(stdscr)
                 if new_file_name is not None:
                     return new_file_name
+                else:
+                    time.sleep(2)
+                    stdscr.erase()
+                    old_idx = None
+                    _draw_file_list()
+
+
+
+def terminal_input(stdscr, message):
+    stdscr.erase()
+    stdscr.addstr(0, 0, message)
+    input_str_list = []
+    k = stdscr.getkey()
+    while k != "\n":
+        if k is not None:
+            if len(k) == 1 and " " <= k <= "~":
+                input_str_list.append(k)
+                stdscr.addstr(0, len(message) + len(input_str_list) - 1, k)
+            elif k == "\x08":
+                input_str_list.pop(len(input_str_list) - 1)
+                stdscr.addstr(0, len(message) + len(input_str_list) - 1, k)
+        k = stdscr.getkey()
+    # submit after enter pressed
+    return "".join(input_str_list)
 
 
 # pylint: disable=inconsistent-return-statements
 def new_file(stdscr):
     stdscr.erase()
-    new_file_name = input("New File Name: ")
+    print(f"cwd inside new_file(): {os.getcwd()}")
+    new_file_name = terminal_input(stdscr, "New File Name: ")
     if os_exists(new_file_name):
-        print("Error: File Already Exists")
+        stdscr.addstr(1,0, "Error: File Already Exists")
         return
-    with open(new_file_name, "w") as f:
-        f.write("")
+    print(f"new filename: {new_file_name}")
+    if not new_file_name.startswith("/saves/") and not new_file_name.startswith("/sd/"):
+        if not util.readonly():
+            with open(new_file_name, "w") as f:
+                f.write("")
 
-    return new_file_name
+            return new_file_name
+        else:
+            stdscr.addstr(1, 0, "Error: Cannot create file in readonly storage")
+    else:
+        with open(new_file_name, "w") as f:
+            f.write("")
+        return new_file_name
 
 
 def _files_list():
