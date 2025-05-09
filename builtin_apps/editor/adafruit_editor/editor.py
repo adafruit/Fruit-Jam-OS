@@ -24,6 +24,7 @@ from argv_file_helper import argv_filename
 
 INPUT_DISPLAY_REFRESH_COOLDOWN = 0.3  # s
 SHOW_MEMFREE = False
+TAB_SIZE = 4  # Number of spaces to represent a tab
 
 
 class MaybeDisableReload:
@@ -79,33 +80,82 @@ class Buffer:
         return len(self) - 1
 
     def insert(self, cursor, string):
-        row, col = cursor.row, cursor.col
-        # print(f"len: {len(self.lines)}")
-        # print(f"row: {row}")
+        row, visual_col = cursor.row, cursor.col
+        actual_col = self._visual_to_actual_col(row, visual_col)
+
         try:
             current = self.lines.pop(row)
         except IndexError:
             current = ""
-        new = current[:col] + string + current[col:]
+
+        new = current[:actual_col] + string + current[actual_col:]
         self.lines.insert(row, new)
 
     def split(self, cursor):
-        row, col = cursor.row, cursor.col
+        row, visual_col = cursor.row, cursor.col
+        actual_col = self._visual_to_actual_col(row, visual_col)
+
         current = self.lines.pop(row)
-        self.lines.insert(row, current[:col])
-        self.lines.insert(row + 1, current[col:])
+        self.lines.insert(row, current[:actual_col])
+        self.lines.insert(row + 1, current[actual_col:])
 
     def delete(self, cursor):
-        row, col = cursor.row, cursor.col
-        if (row, col) < (self.bottom, len(self[row])):
+        row, visual_col = cursor.row, cursor.col
+        actual_col = self._visual_to_actual_col(row, visual_col)
+
+        if (row, actual_col) < (self.bottom, len(self[row])):
             current = self.lines.pop(row)
-            if col < len(current):
-                new = current[:col] + current[col + 1:]
+            if actual_col < len(current):
+                new = current[:actual_col] + current[actual_col + 1:]
                 self.lines.insert(row, new)
             else:
                 nextline = self.lines.pop(row)
                 new = current + nextline
                 self.lines.insert(row, new)
+
+    def _visual_to_actual_col(self, row, visual_col):
+        """Convert a visual column position to the actual buffer position"""
+        if row >= len(self.lines):
+            return 0
+
+        line = self.lines[row]
+        actual_col = 0
+        current_visual_col = 0
+
+        while current_visual_col < visual_col and actual_col < len(line):
+            if line[actual_col] == '\t':
+                current_visual_col += TAB_SIZE
+            else:
+                current_visual_col += 1
+
+            if current_visual_col <= visual_col:
+                actual_col += 1
+
+        return actual_col
+
+    def actual_to_visual_col(self, row, actual_col):
+        """Convert an actual buffer position to visual column position"""
+        if row >= len(self.lines) or actual_col > len(self.lines[row]):
+            return actual_col
+
+        line = self.lines[row]
+        visual_col = 0
+
+        for i in range(actual_col):
+            if i < len(line) and line[i] == '\t':
+                visual_col += TAB_SIZE
+            else:
+                visual_col += 1
+
+        return visual_col
+
+    def get_visual_length(self, row):
+        """Get the visual length of a line, accounting for tabs"""
+        if row >= len(self.lines):
+            return 0
+
+        line = self.lines[row]
+        return sum(TAB_SIZE if c == '\t' else 1 for c in line)
 
 
 def clamp(x, lower, upper):
@@ -142,42 +192,48 @@ class Cursor:
         self._col_hint = col
 
     def _clamp_col(self, buffer):
-        self._col = min(self._col_hint, len(buffer[self.row]))
+        visual_length = buffer.get_visual_length(self.row)
+        self._col = min(self._col_hint, visual_length)
 
-    def up(self, buffer):  # pylint: disable=invalid-name
+    def up(self, buffer):
         if self.row > 0:
             self.row -= 1
             self._clamp_col(buffer)
-            # print(f"cursor pos: {self.row}, {self.col}")
 
     def down(self, buffer):
         if self.row < len(buffer) - 1:
             self.row += 1
             self._clamp_col(buffer)
-            # print(f"cursor pos: {self.row}, {self.col}")
 
     def left(self, buffer):
         if self.col > 0:
-            self.col -= 1
-            # print(f"cursor pos: {self.row}, {self.col}")
+            # Check if cursor is at the end of a tab
+            actual_col = buffer._visual_to_actual_col(self.row, self.col)
+            if actual_col > 0 and buffer[self.row][actual_col - 1] == '\t':
+                # If we're at a tab character, move visual position back by TAB_SIZE
+                self.col = buffer.actual_to_visual_col(self.row, actual_col - 1)
+            else:
+                self.col -= 1
         elif self.row > 0:
             self.row -= 1
-            self.col = len(buffer[self.row])
-            # print(f"cursor pos: {self.row}, {self.col}")
+            self.col = buffer.get_visual_length(self.row)
 
     def right(self, buffer):
-        # print(f"len: {len(buffer)}")
-        if len(buffer) > 0 and self.col < len(buffer[self.row]):
-            self.col += 1
-            # print(f"cursor pos: {self.row}, {self.col}")
+        visual_length = buffer.get_visual_length(self.row)
+        if self.col < visual_length:
+            # Check if we're on a tab character
+            actual_col = buffer._visual_to_actual_col(self.row, self.col)
+            if actual_col < len(buffer[self.row]) and buffer[self.row][actual_col] == '\t':
+                # If we're on a tab character, move visual position forward by TAB_SIZE
+                self.col = buffer.actual_to_visual_col(self.row, actual_col + 1)
+            else:
+                self.col += 1
         elif self.row < len(buffer) - 1:
             self.row += 1
             self.col = 0
-            # print(f"cursor pos: {self.row}, {self.col}")
 
     def end(self, buffer):
-        self.col = len(buffer[self.row])
-        # print(f"cursor pos: {self.row}, {self.col}")
+        self.col = buffer.get_visual_length(self.row)
 
 
 class Window:
@@ -191,7 +247,7 @@ class Window:
     def bottom(self):
         return self.row + self.n_rows - 1
 
-    def up(self, cursor):  # pylint: disable=invalid-name
+    def up(self, cursor):
         if cursor.row == self.row - 1 and self.row > 0:
             self.row -= 1
 
@@ -219,7 +275,7 @@ def right(window, buffer, cursor):
     window.horizontal_scroll(cursor)
 
 
-def home(window, buffer, cursor):  # pylint: disable=unused-argument
+def home(window, buffer, cursor):
     cursor.col = 0
     window.horizontal_scroll(cursor)
 
@@ -229,22 +285,60 @@ def end(window, buffer, cursor):
     window.horizontal_scroll(cursor)
 
 
-def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: disable=too-many-branches,too-many-statements
+def is_at_tab(buffer, row, col):
+    """Check if a visual position corresponds to a tab character"""
+    if row >= len(buffer.lines):
+        return False
 
-    def _only_spaces_before(cursor):
-        i = cursor.col - 1
-        while i >= 0:
-            print(f"i: {i} chr: '{buffer.lines[cursor.row][i]}'")
-            if buffer.lines[cursor.row][i] != " ":
-                return False
-            i -= 1
-        return True
+    actual_col = buffer._visual_to_actual_col(row, col)
+    if actual_col >= len(buffer.lines[row]):
+        return False
+
+    return buffer.lines[row][actual_col] == '\t'
+
+
+def get_tab_visual_positions(buffer, row, col):
+    """Get all visual positions that belong to a tab at the current position"""
+    if not is_at_tab(buffer, row, col):
+        return []
+
+    actual_col = buffer._visual_to_actual_col(row, col)
+    visual_start = buffer.actual_to_visual_col(row, actual_col)
+
+    return list(range(visual_start, visual_start + TAB_SIZE))
+
+
+def is_within_tab_range(buffer, row, col):
+    """Check if a visual position is within any tab's visual range"""
+    if row >= len(buffer.lines):
+        return False
+
+    line = buffer.lines[row]
+    for i, char in enumerate(line):
+        if char == '\t':
+            visual_start = buffer.actual_to_visual_col(row, i)
+            visual_end = visual_start + TAB_SIZE
+            if visual_start <= col < visual_end:
+                return True
+    return False
+
+
+def only_spaces_before(buffer, cursor):
+    """Check if there are only spaces before the cursor"""
+    actual_col = buffer._visual_to_actual_col(cursor.row, cursor.col)
+    for i in range(actual_col):
+        if buffer.lines[cursor.row][i] != " ":
+            return False
+    return True
+
+
+def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):
     if os_exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
             buffer = Buffer(f.read().splitlines())
     else:
         buffer = Buffer([""])
-    print(f"cwd: {os.getcwd()} | {os.getcwd() == "/apps/editor"}")
+
     if os.getcwd() != "/apps/editor" and os.getcwd() != "/":
         absolute_filepath = os.getcwd() + "/" + filename
     else:
@@ -257,12 +351,10 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
 
     window = Window(curses.LINES - 1, curses.COLS - 1)
     cursor = Cursor()
-    terminal_tilegrid.pixel_shader[cursor.col,cursor.row] = [1, 0]
+
+    # Initialize cursor highlighting
+    highlight_cursor_position(terminal_tilegrid, buffer, cursor)
     old_cursor_pos = (cursor.col, cursor.row)
-    # try:
-    #     visible_cursor.text = buffer[0][0]
-    # except IndexError:
-    #     visible_cursor.text = " "
 
     stdscr.erase()
 
@@ -272,19 +364,39 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
         if img[row] == line:
             return
         img[row] = line
-        line += " " * (window.n_cols - len(line))
+        # Calculate displayed length for padding
+        visual_length = sum(TAB_SIZE if c == '\t' else 1 for c in line)
+        padding = window.n_cols - visual_length
+        if padding > 0:
+            line += " " * padding
         stdscr.addstr(row, 0, line)
 
-    print(f"cwd: {os.getcwd()} | abs path: {absolute_filepath} | filename: {filename}")
     while True:
         lastrow = 0
         for row, line in enumerate(buffer[window.row: window.row + window.n_rows]):
             lastrow = row
+
             if row == cursor.row - window.row and window.col > 0:
                 line = "«" + line[window.col + 1:]
-            if len(line) > window.n_cols:
-                line = line[: window.n_cols - 1] + "»"
+
+            # Calculate visual length for line truncation
+            visual_length = sum(TAB_SIZE if c == '\t' else 1 for c in line)
+            if visual_length > window.n_cols:
+                # Find the position to truncate based on visual length
+                actual_col = 0
+                current_visual_col = 0
+                while current_visual_col < window.n_cols - 1 and actual_col < len(line):
+                    if line[actual_col] == '\t':
+                        current_visual_col += TAB_SIZE
+                    else:
+                        current_visual_col += 1
+                    actual_col += 1
+
+                if actual_col < len(line):
+                    line = line[:actual_col] + "»"
+
             setline(row, line)
+
         for row in range(lastrow + 1, window.n_rows):
             setline(row, "~~ EOF ~~")
         row = curses.LINES - 1
@@ -305,14 +417,14 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
 
         stdscr.move(*window.translate(cursor))
 
-        # display.refresh(minimum_frames_per_second=20)
         k = stdscr.getkey()
         if k is not None:
-            # print(repr(k))
             if len(k) == 1 and " " <= k <= "~":
                 buffer.insert(cursor, k)
-                for _ in k:
-                    right(window, buffer, cursor)
+                right(window, buffer, cursor)
+            elif k == "\t":
+                buffer.insert(cursor, k)
+                right(window, buffer, cursor)
             elif k == "\x18":  # ctrl-x
                 if not util.readonly():
                     with open(filename, "w", encoding="utf-8") as f:
@@ -326,11 +438,6 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                         print(row)
                     print("---- end file contents ----")
             elif k == "\x13":  # Ctrl-S
-                print(absolute_filepath)
-                print(f"starts with saves: {absolute_filepath.startswith("/saves/")}")
-                print(f"stars saves: {absolute_filepath.startswith("/saves/")}")
-                print(f"stars sd: {absolute_filepath.startswith("/sd/")}")
-                print(f"readonly: {util.readonly()}")
                 if (absolute_filepath.startswith("/saves/") or
                         absolute_filepath.startswith("/sd/") or
                         not util.readonly()):
@@ -363,24 +470,17 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                                               working_directory=Path(filename).parent.absolute())
                 supervisor.reload()
             elif k == "\x0f":  # Ctrl-O
-
                 supervisor.set_next_code_file("/apps/editor/code.py", sticky_on_reload=False, reload_on_error=True,
                                               working_directory="/apps/editor")
                 supervisor.reload()
-
-
             elif k == "KEY_HOME":
                 home(window, buffer, cursor)
             elif k == "KEY_END":
                 end(window, buffer, cursor)
-            elif k == "KEY_LEFT":
-                left(window, buffer, cursor)
             elif k == "KEY_DOWN":
-
                 cursor.down(buffer)
                 window.down(buffer, cursor)
                 window.horizontal_scroll(cursor)
-                print(f"scroll pos: {window.row}")
             elif k == "KEY_PGDN":
                 for _ in range(window.n_rows):
                     cursor.down(buffer)
@@ -397,39 +497,56 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                     window.horizontal_scroll(cursor)
             elif k == "KEY_RIGHT":
                 right(window, buffer, cursor)
+            elif k == "KEY_LEFT":
+                left(window, buffer, cursor)
             elif k == "\n":
-                leading_spaces = _count_leading_characters(buffer.lines[cursor.row], " ")
+                # Get leading whitespace from the current line
+                current_line = buffer.lines[cursor.row]
+                leading_spaces = _count_leading_characters(current_line, " ")
+                leading_tabs = _count_leading_characters(current_line, "\t")
+
+                # Split the line at the cursor
                 buffer.split(cursor)
-                right(window, buffer, cursor)
+
+                # Move to the beginning of the next line
+                cursor.row += 1
+                cursor.col = 0
+
+                # Insert indentation in the correct order (first tabs, then spaces)
+                for i in range(leading_tabs):
+                    buffer.insert(cursor, "\t")
+                    right(window, buffer, cursor)
+
                 for i in range(leading_spaces):
                     buffer.insert(cursor, " ")
                     right(window, buffer, cursor)
-            elif k in ("KEY_DELETE", "\x04"):
-                print("delete")
-                if cursor.row < len(buffer.lines) - 1 or \
-                        cursor.col < len(buffer.lines[cursor.row]):
-                    buffer.delete(cursor)
-                    # try:
-                    #     visible_cursor.text = buffer.lines[cursor.row][cursor.col]
-                    # except IndexError:
-                    #     visible_cursor.text = " "
 
+                # Update window scrolling
+                window.down(buffer, cursor)
+                window.horizontal_scroll(cursor)
+
+            elif k in ("KEY_DELETE", "\x04"):
+                if cursor.row < len(buffer.lines) - 1 or \
+                        cursor.col < buffer.get_visual_length(cursor.row):
+                    buffer.delete(cursor)
             elif k in ("KEY_BACKSPACE", "\x7f", "\x08"):
-                print(f"backspace {bytes(k, 'utf-8')}")
                 if (cursor.row, cursor.col) > (0, 0):
-                    if cursor.col > 0 and buffer.lines[cursor.row][cursor.col-1] == " " and _only_spaces_before(cursor):
-                        for i in range(4):
+                    if cursor.col > 0 and only_spaces_before(buffer, cursor):
+                        # Handle backspace with spaces
+                        for i in range(min(TAB_SIZE, cursor.col)):
                             left(window, buffer, cursor)
                             buffer.delete(cursor)
                     else:
+                        # Check if cursor is within a tab's visual space
+                        if is_within_tab_range(buffer, cursor.row, cursor.col - 1):
+                            actual_col = buffer._visual_to_actual_col(cursor.row, cursor.col - 1)
+                            # Set cursor to the beginning of the tab
+                            cursor.col = buffer.actual_to_visual_col(cursor.row, actual_col)
+
                         left(window, buffer, cursor)
                         buffer.delete(cursor)
-
             else:
                 print(f"unhandled k: {k}")
-                print(f"unhandled K: {ord(k)}")
-                print(f"unhandled k: {bytes(k, 'utf-8')}")
-
 
         if mouse is not None:
             pressed_btns = mouse.update()
@@ -437,32 +554,54 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                 clicked_tile_coords[0] = mouse.x // 6
                 clicked_tile_coords[1] = mouse.y // 12
 
-                if clicked_tile_coords[0] > len(buffer.lines[clicked_tile_coords[1]]):
-                    clicked_tile_coords[0] = len(buffer.lines[clicked_tile_coords[1]])
+                if clicked_tile_coords[1] < len(buffer.lines):
+                    visual_length = buffer.get_visual_length(clicked_tile_coords[1])
+                    if clicked_tile_coords[0] > visual_length:
+                        clicked_tile_coords[0] = visual_length
+
                 cursor.row = clicked_tile_coords[1]
                 cursor.col = clicked_tile_coords[0]
 
-
-        # print("updating visible cursor")
-        # print(f"anchored pos: {((cursor.col * 6) - 1, (cursor.row * 12) + 20)}")
-
+        # Update cursor highlighting if position changed
         if old_cursor_pos != (cursor.col, cursor.row):
-            # print(f"old cursor: {old_cursor_pos}, new: {(cursor.col, cursor.row)}")
-            terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]] = [0,1]
-            terminal_tilegrid.pixel_shader[cursor.col, cursor.row] = [1,0]
-            # print(f"old: {terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]]} new: {terminal_tilegrid.pixel_shader[cursor.col, cursor.row]}")
+            # Clear old cursor position
+            clear_cursor_highlight(terminal_tilegrid, buffer, old_cursor_pos[1], old_cursor_pos[0])
 
-            # visible_cursor.anchored_position = ((cursor.col * 6) - 1, (cursor.row * 12) + 20)
+            # Highlight new cursor position
+            highlight_cursor_position(terminal_tilegrid, buffer, cursor)
 
-            # visible_cursor.anchored_position = ((cursor.col * 6), ((cursor.row - window.row) * 12))
-            #
-            # try:
-            #     visible_cursor.text = buffer.lines[cursor.row][cursor.col]
-            # except IndexError:
-            #     visible_cursor.text = " "
+            old_cursor_pos = (cursor.col, cursor.row)
 
 
-        old_cursor_pos = (cursor.col, cursor.row)
+def highlight_cursor_position(terminal_tilegrid, buffer, cursor):
+    """Highlight the cursor position, handling tabs properly"""
+    if terminal_tilegrid is None:
+        return
+
+    if is_at_tab(buffer, cursor.row, cursor.col):
+        # If at a tab, highlight all positions that represent the tab
+        tab_positions = get_tab_visual_positions(buffer, cursor.row, cursor.col)
+        for pos in tab_positions:
+            terminal_tilegrid.pixel_shader[pos, cursor.row] = [1, 0]
+    else:
+        # Otherwise just highlight the current position
+        terminal_tilegrid.pixel_shader[cursor.col, cursor.row] = [1, 0]
+
+
+def clear_cursor_highlight(terminal_tilegrid, buffer, row, col):
+    """Clear cursor highlighting, handling tabs properly"""
+    if terminal_tilegrid is None:
+        return
+
+    if is_at_tab(buffer, row, col):
+        # If at a tab, clear all positions that represent the tab
+        tab_positions = get_tab_visual_positions(buffer, row, col)
+        for pos in tab_positions:
+            terminal_tilegrid.pixel_shader[pos, row] = [0, 1]
+    else:
+        # Otherwise just clear the current position
+        terminal_tilegrid.pixel_shader[col, row] = [0, 1]
+
 
 def edit(filename, terminal=None, mouse=None, terminal_tilegrid=None):
     with MaybeDisableReload():
