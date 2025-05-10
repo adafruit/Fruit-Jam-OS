@@ -107,6 +107,12 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
         for builtin_app_dir in os.listdir("builtin_apps"):
             circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"apps/{builtin_app_dir}/code.py"],
                        standalone_mode=False)
+
+        # install reqs for launcher and boot_animation
+        circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"code.py"], standalone_mode=False)
+        circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"boot_animation.py"], standalone_mode=False)
+        circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"boot.py"], standalone_mode=False)
+
         os.remove(temp_dir / "boot_out.txt")
         # Create the final zip file
         with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
