@@ -1,10 +1,8 @@
 # SPDX-FileCopyrightText: 2025 Tim Cocks for Adafruit Industries
 # SPDX-License-Identifier: MIT
-import os
 
 import supervisor
 from adafruit_argv_file import read_argv, write_argv
-import json
 import storage
 
 supervisor.runtime.autoreload = False

@@ -4,9 +4,8 @@
 import gc
 
 import board
-import displayio
 import supervisor
-from displayio import OnDiskBitmap, TileGrid, Group
+from displayio import TileGrid, Group
 import adafruit_imageload
 import time
 import math

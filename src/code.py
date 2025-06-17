@@ -8,20 +8,16 @@ import array
 import atexit
 import json
 import math
-import os
-
 import displayio
-
 import supervisor
 import sys
-
 import terminalio
 import usb
+
 import adafruit_pathlib as pathlib
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.text_box import TextBox
 from adafruit_display_text.bitmap_label import Label
-
 from adafruit_displayio_layout.layouts.grid_layout import GridLayout
 from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload

@@ -104,6 +104,12 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
         # copy builtin apps
         shutil.copytree("builtin_apps", apps_dir, dirs_exist_ok=True)
         shutil.copyfile("mock_boot_out.txt", temp_dir / "boot_out.txt")
+
+        # install launcher required libs
+        circup_cli(["--path", temp_dir, "install", "--auto"],
+                   standalone_mode=False)
+
+        # install builtin apps required libs
         for builtin_app_dir in os.listdir("builtin_apps"):
             circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"apps/{builtin_app_dir}/code.py"],
                        standalone_mode=False)
