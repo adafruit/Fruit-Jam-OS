@@ -37,5 +37,5 @@ jobs:
       uses: shogo82148/actions-upload-release-asset@v1
       with:
         asset_path: "dist/*"
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        upload-url: ${{ github.event.release.upload_url }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        upload_url: ${{ github.event.release.upload_url }}
