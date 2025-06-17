@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2025 Tim Cocks, written for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
+name: GitHub Release Actions
+
+on: [pull_request, push]
+
+jobs:
+  validate-build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up requested Python version
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+    - name: Versions
+      shell: bash
+      run: |
+        python3 --version
+    - name: Checkout Current Repo
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        show-progress: false
+    - name: Install reqs
+      shell: bash
+      run: |
+        pip install -r requirements.txt
+    - name: Build assets
+      shell: bash
+      run: |
+        python build.py
