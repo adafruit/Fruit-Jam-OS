@@ -151,7 +151,11 @@ def main():
     src_dir = root_dir / "src"
     learn_projects_dir = root_dir / "learn-projects"
     output_dir = root_dir / "dist"
-    
+
+    # delete output dir if it exists
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
     

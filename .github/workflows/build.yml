@@ -30,4 +30,4 @@ jobs:
     - name: Build assets
       shell: bash
       run: |
-        python build.py
+        python release_updater.py
