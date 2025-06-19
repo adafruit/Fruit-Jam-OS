@@ -78,7 +78,7 @@ def PyDOS():
 
     print("Starting Py-DOS...")
     envVars["PATH"] = sep+";/PyBasic"
-    envVars["PROMPT"] = "$C$R$F$P$G"
+    envVars["PROMPT"] = "$P$G"
     envVars["LIB"] = ";".join(path[1:])
     envVars["DIRSEP"] = sep
     if Pydos_ui:
@@ -496,7 +496,7 @@ def PyDOS():
             else:
                 prompt = "\n"
                 prmpLitrl = True
-                for prmpToken in envVars.get('PROMPT','$C$R$F$P$G').replace("$$","$."):
+                for prmpToken in envVars.get('PROMPT','$P$G').replace("$$","$."):
                     if prmpToken == '$':
                         prmpLitrl = False
                         continue
