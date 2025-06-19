@@ -73,7 +73,7 @@ def PyDOS():
     global envVars
     if "envVars" not in globals().keys():
         envVars = {}
-    _VER = "1.49"
+    _VER = "1.51"
     prmpVals = ['>','(',')','&','|','\x1b','\b','<','=',' ',_VER,'\n','$','']
 
     print("Starting Py-DOS...")
@@ -84,8 +84,8 @@ def PyDOS():
     if Pydos_ui:
         (envVars["_scrHeight"],envVars["_scrWidth"]) = Pydos_ui.get_screensize()
     else:
-        envVars["_scrHeight"] = 24
-        envVars["_scrWidth"] = 80
+        envVars["_scrHeight"] = 29
+        envVars["_scrWidth"] = 79
     scrWdth = int(envVars["_scrWidth"])
 
     wldCLen = 0
