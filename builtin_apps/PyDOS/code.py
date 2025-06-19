@@ -73,7 +73,7 @@ def PyDOS():
     global envVars
     if "envVars" not in globals().keys():
         envVars = {}
-    _VER = "1.51"
+    _VER = "1.51-fruitjam"
     prmpVals = ['>','(',')','&','|','\x1b','\b','<','=',' ',_VER,'\n','$','']
 
     print("Starting Py-DOS...")
@@ -674,7 +674,7 @@ def PyDOS():
                 elif args[1].upper() == 'OFF':
                     batEcho = False
                 else:
-                    print(cmdLine[5:].replace("\e",chr(27)).replace('\x1b',chr(27)).replace("\E",chr(27)).replace('\X1B',chr(27)))
+                    print(cmdLine[5:])
 
         elif cmd == "PAUSE":
             anyKey()
