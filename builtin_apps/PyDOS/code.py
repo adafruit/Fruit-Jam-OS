@@ -678,7 +678,7 @@ def PyDOS():
             print("Environment Commands: HELP, SET, PROMPT, PATH")
             print("Operating System Commands: EXIT, VER, MEM, DATE, TIME")
             print("Batch Commands: GOTO, IF, ECHO, PAUSE")
-            print("Command to execute a single Pythin command: PEXEC")
+            print("Command to execute a single Python command: PEXEC")
         elif cmd == "DIR":
             if len(args) == 1:
                 prDir(os.getcwd()[(2 if os.getcwd()[1:2]==":" else 0):],swBits)
