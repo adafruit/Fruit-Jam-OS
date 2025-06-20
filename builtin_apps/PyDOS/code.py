@@ -3,7 +3,7 @@ try:
     from os import sep
 except:
     sep = os.getcwd()[0]
-from time import localtime
+from time import localtime,struct_time
 from sys import stdin,implementation,path
 try:
     from traceback import print_exception,format_exception
@@ -22,6 +22,11 @@ try:
     from pydos_ui import input
 except ImportError:
     pass
+try:
+    from rtc import RTC
+    clockavail = True
+except ImportError:
+    clockavail = False
 
 import gc
 imp = "B"
@@ -102,6 +107,40 @@ def PyDOS():
     gc.collect()
 
     aFile = lambda dPth: bool(os.stat(dPth)[0]&(32768))
+
+    def setdate(newDate):
+        mdays = [0,31,29,31,30,31,30,31,31,30,31,30,31]
+
+        if newDate != "":
+            inDate = newDate.split('-')
+
+            if len(inDate) != 3:
+                print("Bad Date format")
+            elif int(inDate[0]) not in range(1,13):
+                print("Invalid month entered (1-12)")
+            elif int(inDate[1]) not in range(1,mdays[int(inDate[0])]+1):
+                print("invalid day entered (1-",mdays[int(inDate[0])],")")
+            elif int(inDate[2]) not in range(21,32):
+                print("invalid year entered (21-31)")
+            else:
+                RTC().datetime = struct_time((2000+int(inDate[2]),int(inDate[0]),int(inDate[1]), \
+                    RTC().datetime[3],RTC().datetime[4],RTC().datetime[5],RTC().datetime[6],-1,-1))
+
+    def settime(newTime):
+        if newTime != "":
+            inTime = newTime.split(':')
+
+            if len(inTime) != 3:
+                print("Bad time format")
+            elif int(inTime[0]) not in range(0,25):
+                print("Invalid hour entered (0-24)")
+            elif int(inTime[1]) not in range(0,61):
+                print("invalid minute entered (0-60)")
+            elif int(inTime[2]) not in range(0,61):
+                print("invalid seconds entered (0-60)")
+            else:
+                RTC().datetime = struct_time((RTC().datetime[0],RTC().datetime[1],RTC().datetime[2], \
+                    int(inTime[0]),int(inTime[1]),int(inTime[2]),RTC().datetime[6],-1,-1))
 
     def anyKey():
         print("Press any key to continue . . . ."[:scrWdth],end="")
@@ -634,6 +673,12 @@ def PyDOS():
 
         if cmd == "" or cmd == "REM":
             continue
+        elif cmd == "HELP":
+            print("File system Commands: DIR, RENAME, DEL, TYPE, CD, MKDIR, RMDIR, COPY")
+            print("Environment Commands: HELP, SET, PROMPT, PATH")
+            print("Operating System Commands: EXIT, VER, MEM, DATE, TIME")
+            print("Batch Commands: GOTO, IF, ECHO, PAUSE")
+            print("Command to execute a single Pythin command: PEXEC")
         elif cmd == "DIR":
             if len(args) == 1:
                 prDir(os.getcwd()[(2 if os.getcwd()[1:2]==":" else 0):],swBits)
@@ -643,11 +688,27 @@ def PyDOS():
                 print("Too many arguments. Command Format: DIR/p/w/s [path][file]")
 
         elif cmd == "DATE":
-            i = localtime()[6]*3
-            print(f'The current date is: {"MonTueWedThuFriSatSun"[i:i+3]} {localtime()[1]:02}/{localtime()[2]:02}/{localtime()[0]:04}')
+            if len(args) <=2:
+                if len(args) == 2:
+                    if clockavail:
+                        setdate(args[1])
+                    else:
+                        print("Real Time Clock (rtc) not available on board")
+                i = localtime()[6]*3
+                print(f'The current date is: {"MonTueWedThuFriSatSun"[i:i+3]} {localtime()[1]:02}/{localtime()[2]:02}/{localtime()[0]:04}')
+            else:
+                print("Too many arguments. Command Format: DATE [mm-dd-yy]")
 
         elif cmd == "TIME":
-            print(f'The current time is: {localtime()[3]%12}:{localtime()[4]:02}:{localtime()[5]:02} {["AM","PM"][localtime()[3]//12]}')
+            if len(args) <= 2:
+                if len(args) == 2:
+                    if clockavail:
+                        settime(args[1])
+                    else:
+                        print("Real Time Clock (rtc) not available on board")
+                print(f'The current time is: {localtime()[3]%12}:{localtime()[4]:02}:{localtime()[5]:02} {["AM","PM"][localtime()[3]//12]}')
+            else:
+                print("Too many arguments. Command Format: TIME [hh:mm:ss]")
 
         elif cmd == "MEM":
             gc.collect()
@@ -839,8 +900,8 @@ def PyDOS():
                             if Pydos_ui:
                                 (tHeight,tWidth) = Pydos_ui.get_screensize(envVars.get('_display'))
                             else:
-                                tHeight = 24
-                                tWidth = 80
+                                tHeight = 29
+                                tWidth = 79
                             if envCmdVar == "_scrWidth":
                                 envVars[envCmdVar] = tWidth
                             else:
