@@ -4,7 +4,10 @@
 
 name: GitHub Release Actions
 
-on: [pull_request, push]
+on:
+  schedule:
+    - cron: 15 8 * * *
+  workflow_dispatch:
 
 jobs:
   validate-build:
@@ -30,4 +33,4 @@ jobs:
     - name: Build assets
       shell: bash
       run: |
-        python build.py
+        python release_updater.py
