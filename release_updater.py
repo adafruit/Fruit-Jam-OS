@@ -26,6 +26,10 @@ def get_file_sha256(file_path):
         return "File not found."
     return sha256_hash.hexdigest()
 
+def print_hashes(hash_dict):
+    for filename in sorted(hash_dict.keys()):
+        print(f"{filename}: {hash_dict[filename]}")
+
 
 def is_release_required():
     """
@@ -64,10 +68,18 @@ def is_release_required():
     for dist_file in Path("dist").iterdir():
         dist_file_hashes[dist_file.name] = get_file_sha256(dist_file)
 
+    print("Downloaded file hashes:")
+    print_hashes(downloaded_file_hashes)
+
+    print("Dist file hashes:")
+    print_hashes(dist_file_hashes)
+
     # compare hashes
     if dist_file_hashes != downloaded_file_hashes:
         print("Zip hashes differ, a release is required.")
         return True
+
+    print("Zip hashes match, no release required.")
     return False
 
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import time
 import zipfile
@@ -118,6 +119,9 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
         with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
             for file_path in temp_dir.rglob("*"):
                 if file_path.is_file():
+                    modification_time = datetime(2000, 1, 1, 0, 0, 0)
+                    modification_timestamp = modification_time.timestamp()
+                    os.utime(file_path, (modification_timestamp, modification_timestamp))
                     arcname = file_path.relative_to(temp_dir)
                     zf.write(file_path, arcname)
                     
@@ -151,7 +155,11 @@ def main():
     src_dir = root_dir / "src"
     learn_projects_dir = root_dir / "learn-projects"
     output_dir = root_dir / "dist"
-    
+
+    # delete output dir if it exists
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
     
