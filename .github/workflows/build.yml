@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-name: GitHub Release Actions
+name: Validate Build
 
 on: [pull_request, push]
 
@@ -27,7 +27,7 @@ jobs:
       shell: bash
       run: |
         pip install -r requirements.txt
-    - name: Build assets
+    - name: Build Fruit Jam OS
       shell: bash
       run: |
         python build.py
