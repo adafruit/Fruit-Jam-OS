@@ -15,7 +15,7 @@ from . import util
 from adafruit_pathlib import Path
 import time
 import json
-from argv_file_helper import argv_filename
+from adafruit_argv_file import argv_filename
 
 # pylint: disable=redefined-builtin
 
