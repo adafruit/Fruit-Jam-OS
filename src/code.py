@@ -88,72 +88,52 @@ mouse_tg.x = display.width // (2 * scale)
 mouse_tg.y = display.height // (2 * scale)
 # 046d:c52f
 
+launcher_config = {}
+if pathlib.Path("launcher.conf.json").exists():
+    with open("launcher.conf.json", "r") as f:
+        launcher_config = json.load(f)
 
 # mouse = usb.core.find(idVendor=0x046d, idProduct=0xc52f)
 
 DIR_IN = 0x80
 mouse_interface_index, mouse_endpoint_address = None, None
 mouse = None
-# scan for connected USB device and loop over any found
-print("scanning usb")
-for device in usb.core.find(find_all=True):
-    # print device info
-    print(f"{device.idVendor:04x}:{device.idProduct:04x}")
-    print(device.manufacturer, device.product)
-    print()
-    config_descriptor = adafruit_usb_host_descriptors.get_configuration_descriptor(
-        device, 0
-    )
-    print(config_descriptor)
-    #
-    # i = 0
-    # while i < len(config_descriptor):
-    #     descriptor_len = config_descriptor[i]
-    #     descriptor_type = config_descriptor[i + 1]
-    #     if descriptor_type == adafruit_usb_host_descriptors.DESC_CONFIGURATION:
-    #         config_value = config_descriptor[i + 5]
-    #         print(f" value {config_value:d}")
-    #     elif descriptor_type == adafruit_usb_host_descriptors.DESC_INTERFACE:
-    #         interface_number = config_descriptor[i + 2]
-    #         interface_class = config_descriptor[i + 5]
-    #         interface_subclass = config_descriptor[i + 6]
-    #         interface_protocol = config_descriptor[i + 7]
-    #         print(f" interface[{interface_number:d}]")
-    #         print(
-    #             f"  class {interface_class:02x} subclass {interface_subclass:02x}"
-    #         )
-    #         print(f"protocol: {interface_protocol}")
-    #     elif descriptor_type == adafruit_usb_host_descriptors.DESC_ENDPOINT:
-    #         endpoint_address = config_descriptor[i + 2]
-    #         if endpoint_address & DIR_IN:
-    #             print(f"  IN {endpoint_address:02x}")
-    #         else:
-    #             print(f"  OUT {endpoint_address:02x}")
-    #     i += descriptor_len
-    # print()
-    #
-    # # assume the device is the mouse
-    # mouse = device
-    _possible_interface_index, _possible_endpoint_address = adafruit_usb_host_descriptors.find_boot_mouse_endpoint(device)
-    if _possible_interface_index is not None and _possible_endpoint_address is not None:
-        mouse = device
-        mouse_interface_index = _possible_interface_index
-        mouse_endpoint_address = _possible_endpoint_address
-        print(f"mouse interface: {mouse_interface_index} endpoint_address: {hex(mouse_endpoint_address)}")
 
-mouse_was_attached = None
-if mouse is not None:
-    # detach the kernel driver if needed
-    if mouse.is_kernel_driver_active(0):
-        mouse_was_attached = True
-        mouse.detach_kernel_driver(0)
-    else:
-        mouse_was_attached = False
+if "use_mouse" in launcher_config and launcher_config["use_mouse"]:
 
-    # set configuration on the mouse so we can use it
-    mouse.set_configuration()
+    # scan for connected USB device and loop over any found
+    print("scanning usb")
+    for device in usb.core.find(find_all=True):
+        # print device info
+        print(f"{device.idVendor:04x}:{device.idProduct:04x}")
+        print(device.manufacturer, device.product)
+        print()
+        config_descriptor = adafruit_usb_host_descriptors.get_configuration_descriptor(
+            device, 0
+        )
+        print(config_descriptor)
 
-mouse_buf = array.array("b", [0] * 8)
+        _possible_interface_index, _possible_endpoint_address = adafruit_usb_host_descriptors.find_boot_mouse_endpoint(device)
+        if _possible_interface_index is not None and _possible_endpoint_address is not None:
+            mouse = device
+            mouse_interface_index = _possible_interface_index
+            mouse_endpoint_address = _possible_endpoint_address
+            print(f"mouse interface: {mouse_interface_index} endpoint_address: {hex(mouse_endpoint_address)}")
+
+    mouse_was_attached = None
+    if mouse is not None:
+        # detach the kernel driver if needed
+        if mouse.is_kernel_driver_active(0):
+            mouse_was_attached = True
+            mouse.detach_kernel_driver(0)
+        else:
+            mouse_was_attached = False
+
+        # set configuration on the mouse so we can use it
+        mouse.set_configuration()
+
+    mouse_buf = array.array("b", [0] * 8)
+
 WIDTH = 280
 HEIGHT = 182
 
@@ -248,10 +228,22 @@ for path in app_path.iterdir():
     apps.append({
         "title": title,
         "icon": str(icon_file.absolute()) if icon_file is not None else None,
-        "file": str(code_file.absolute())
+        "file": str(code_file.absolute()),
+        "dir": path
     })
 
     i += 1
+
+print("launcher config", launcher_config)
+if "favorites" in launcher_config:
+
+    for favorite_app in reversed(launcher_config["favorites"]):
+        print("checking favorite", favorite_app)
+        for app in apps:
+            print(f"checking app: {app["dir"]}")
+            if app["dir"] == f"/apps/{favorite_app}":
+                apps.remove(app)
+                apps.insert(0, app)
 
 
 def reuse_cell(grid_coords):
@@ -317,6 +309,9 @@ def _unhide_cell_group(cell_group):
 
 
 def display_page(page_index):
+    max_pages = math.ceil(len(apps) / 6)
+    page_txt.text = f"{page_index + 1}/{max_pages}"
+
     for grid_index in range(6):
         grid_pos = (grid_index % config["width"], grid_index // config["width"])
         try:
@@ -341,6 +336,11 @@ def display_page(page_index):
         # app_titles.append(title_txt)
         print(f"{grid_index} | {grid_index % config["width"], grid_index // config["width"]}")
 
+
+page_txt = Label(terminalio.FONT, text="", scale=2)
+page_txt.anchor_point = (1.0, 1.0)
+page_txt.anchored_position = (display.width - 2, display.height - 2)
+main_group.append(page_txt)
 
 cur_page = 0
 display_page(cur_page)
@@ -370,7 +370,7 @@ if mouse:
     scaled_group.append(mouse_tg)
 
 
-help_txt = Label(terminalio.FONT, text="[Arrow]: Move\n[E]:     Edit\n[Enter]:  Run")
+help_txt = Label(terminalio.FONT, text="[Arrow]: Move\n[E]:     Edit\n[Enter]:  Run\n[1-9]:   Page")
 # help_txt = TextBox(terminalio.FONT, width=88, height=30, align=TextBox.ALIGN_RIGHT, background_color=0x008800, text="[E]: Edit\n[Enter]:  Run")
 help_txt.anchor_point = (0, 0)
 
@@ -416,6 +416,18 @@ def change_selected(new_selected):
 
 
 change_selected((0, 0))
+
+def page_right():
+    global cur_page
+    if cur_page < math.ceil(len(apps) / 6) - 1:
+        cur_page += 1
+        display_page(cur_page)
+
+def page_left():
+    global cur_page
+    if cur_page > 0:
+        cur_page -= 1
+        display_page(cur_page)
 
 
 def handle_key_press(key):
@@ -476,15 +488,9 @@ def handle_key_press(key):
                 index = None
             print("go!")
         elif selected is left_tg:
-            if cur_page > 0:
-                cur_page -= 1
-                display_page(cur_page)
-
+            page_left()
         elif selected is right_tg:
-            if cur_page < math.ceil(len(apps) / 6) - 1:
-                cur_page += 1
-                display_page(cur_page)
-
+            page_right()
     elif key == "e":
         if isinstance(selected, tuple):
             editor_index = (selected[1] * 3 + selected[0]) + (cur_page * 6)
@@ -492,6 +498,17 @@ def handle_key_press(key):
                 editor_index = None
 
             print("go!")
+    elif key in "123456789":
+        if key != "9":
+            requested_page = int(key)
+            max_page = math.ceil(len(apps) / 6)
+            if requested_page <= max_page:
+                cur_page = requested_page - 1
+                display_page(requested_page-1)
+        else:  # key == 9
+            max_page = math.ceil(len(apps) / 6)
+            cur_page = max_page - 1
+            display_page(max_page - 1)
     else:
         print(f"unhandled key: {repr(key)}")
 
@@ -533,6 +550,12 @@ while True:
                 clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
                 if clicked_cell is not None:
                     index = clicked_cell[1] * config["width"] + clicked_cell[0]
+
+                if right_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
+                    page_right()
+                if left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
+                    page_left()
+
 
     if index is not None:
         print("index", index)
