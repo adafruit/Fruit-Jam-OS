@@ -32,6 +32,8 @@ jobs:
       run: |
         pip install -r requirements.txt
     - name: Check If Release Needed
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
         python release_updater.py
