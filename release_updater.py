@@ -2,7 +2,10 @@ import hashlib
 import shutil
 from pathlib import Path
 from urllib.request import urlretrieve
-
+import os
+import sys
+import json
+import re
 import requests
 
 from build import main as build_main
@@ -83,5 +86,87 @@ def is_release_required():
     return False
 
 
+
+def parse_semantic_version(version_string):
+    """Parse semantic version string and return (major, minor, patch)."""
+
+    # Match semantic version pattern
+    match = re.match(r'^(\d+)\.(\d+)\.(\d+)(?:-.*)?(?:\+.*)?$', version_string)
+    if not match:
+        raise ValueError(f"Invalid semantic version: {version_string}")
+
+    return int(match.group(1)), int(match.group(2)), int(match.group(3))
+
+
+def increment_patch_version(version_string):
+    """Increment patch version by 1."""
+    major, minor, patch = parse_semantic_version(version_string)
+    new_patch = patch + 1
+    return f"{major}.{minor}.{new_patch}"
+
+
+def get_latest_release():
+    """Fetch the latest release from GitHub API."""
+    url = f"https://api.github.com/repos/adafruit/Fruit-Jam-OS/releases/latest"
+    headers = {
+        "Authorization": f"token {os.getenv('GITHUB_TOKEN')}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code != 200:
+        print(f"Error fetching latest release: {response.status_code}")
+        print(f"Response: {response.text}")
+        sys.exit(1)
+
+    return response.json()
+
+
+def create_release(tag_name):
+    """Create a new GitHub release."""
+    url = f"https://api.github.com/repos/adafruit/Fruit-Jam-OS/releases"
+    headers = {
+        "Authorization": f"token {os.getenv('GITHUB_TOKEN')}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "tag_name": tag_name,
+        "name": tag_name,
+        "body": f"Release {tag_name}",
+        "draft": False,
+        "prerelease": False
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    if response.status_code != 201:
+        print(f"Error creating release: {response.status_code}")
+        print(f"Response: {response.text}")
+        sys.exit(1)
+
+    return response.json()
+
 if __name__ == '__main__':
-    is_release_required()
+    if is_release_required():
+
+        print(f"Creating release for Fruit Jam OS")
+
+        # Get latest release
+        latest_release = get_latest_release()
+
+        if latest_release:
+            latest_tag = latest_release["tag_name"]
+            print(f"Latest release: {latest_tag}")
+
+            try:
+                new_tag = increment_patch_version(latest_tag)
+            except ValueError as e:
+                print(f"Error parsing version: {e}")
+                sys.exit(1)
+        else:
+            new_tag = "0.1.0"
+
+        print(f"Creating new release: {new_tag}")
