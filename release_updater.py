@@ -170,3 +170,10 @@ if __name__ == '__main__':
             new_tag = "0.1.0"
 
         print(f"Creating new release: {new_tag}")
+
+        new_release = create_release(
+            tag_name=new_tag,
+        )
+
+        print(f"✅ Successfully created release: {new_tag}")
+        print(f"Release URL: {new_release['html_url']}")
