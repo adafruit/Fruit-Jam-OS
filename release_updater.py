@@ -150,30 +150,44 @@ def create_release(tag_name):
     return response.json()
 
 if __name__ == '__main__':
+
     if is_release_required():
+        if len(sys.argv) > 1 and sys.argv[1] == "make_release":
+            print(f"Creating release for Fruit Jam OS")
 
-        print(f"Creating release for Fruit Jam OS")
+            # Get latest release
+            latest_release = get_latest_release()
 
-        # Get latest release
-        latest_release = get_latest_release()
+            if latest_release:
+                latest_tag = latest_release["tag_name"]
+                print(f"Latest release: {latest_tag}")
 
-        if latest_release:
-            latest_tag = latest_release["tag_name"]
-            print(f"Latest release: {latest_tag}")
+                try:
+                    new_tag = increment_patch_version(latest_tag)
+                except ValueError as e:
+                    print(f"Error parsing version: {e}")
+                    sys.exit(1)
+            else:
+                new_tag = "0.1.0"
 
-            try:
-                new_tag = increment_patch_version(latest_tag)
-            except ValueError as e:
-                print(f"Error parsing version: {e}")
-                sys.exit(1)
-        else:
-            new_tag = "0.1.0"
+            print(f"Creating new release: {new_tag}")
 
-        print(f"Creating new release: {new_tag}")
+            new_release = create_release(
+                tag_name=new_tag,
+            )
 
-        new_release = create_release(
-            tag_name=new_tag,
-        )
+            github_output_path = os.environ.get('GITHUB_OUTPUT')
 
-        print(f"✅ Successfully created release: {new_tag}")
-        print(f"Release URL: {new_release['html_url']}")
+            if github_output_path:
+                with open(github_output_path, 'a') as f:
+                    f.write(f"release_created=true\n")
+
+            print(f"Successfully created release: {new_tag}")
+            print(f"Release URL: {new_release['html_url']}")
+    else:
+        github_output_path = os.environ.get('GITHUB_OUTPUT')
+
+        if github_output_path:
+            with open(github_output_path, 'a') as f:
+                f.write(f"release_created=false\n")
+

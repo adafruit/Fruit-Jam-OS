@@ -31,9 +31,42 @@ jobs:
       shell: bash
       run: |
         pip install -r requirements.txt
-    - name: Check If Release Needed
+    - name: Create Release If Needed
+      id: check_release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
       run: |
-        python release_updater.py
+        python release_updater.py make_release
+
+  upload-release-assets:
+    if: github.repository_owner == 'adafruit' && steps.check_release.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up requested Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Versions
+        shell: bash
+        run: |
+          python3 --version
+      - name: Checkout Current Repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          show-progress: false
+      - name: Install reqs
+        shell: bash
+        run: |
+          pip install -r requirements.txt
+      - name: Build assets
+        shell: bash
+        run: |
+          python build.py
+      - name: Upload Release Assets
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          asset_path: "dist/*"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ github.event.release.upload_url }}
