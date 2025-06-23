@@ -7,6 +7,9 @@ from pathlib import Path
 import requests
 from circup.commands import main as circup_cli
 
+# TODO: maybe change these to use the first URLs i.e. https://learn.adafruit.com/elements/3198279/download?type=zip
+#  instead of the redirect URLs that are direct to the CDN. That will make easier for users to add apps here.
+#  The code will need to follow the redirect and get the filename from the next URL.
 LEARN_PROJECT_URLS = [
     "https://cdn-learn.adafruit.com/downloads/zip/3194974/Metro/Metro_RP2350_Snake.zip?timestamp={}",
     "https://cdn-learn.adafruit.com/downloads/zip/3195762/Metro/Metro_RP2350_Memory/memory_game.zip?timestamp={}",
@@ -15,6 +18,8 @@ LEARN_PROJECT_URLS = [
     "https://cdn-learn.adafruit.com/downloads/zip/3196927/Metro/Metro_RP2350_Match3/match3_game.zip?timestamp={}",
     "https://cdn-learn.adafruit.com/downloads/zip/3194422/Metro/Metro_RP2350_Breakout.zip?timestamp={}",
     "https://cdn-learn.adafruit.com/downloads/zip/3196755/Metro/Metro_RP2350_Chips_Challenge.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3198116/Metro/Metro_RP2350_Minesweeper.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3198279/Fruit_Jam/Larsio_Paint_Music.zip?timestamp=1750522464"
 ]
 
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
