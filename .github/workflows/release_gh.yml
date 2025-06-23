@@ -10,6 +10,7 @@ on:
 
 jobs:
   upload-release-assets:
+    if: github.repository_owner == 'adafruit'
     runs-on: ubuntu-latest
     steps:
     - name: Set up requested Python version

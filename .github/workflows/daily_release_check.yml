@@ -11,6 +11,7 @@ on:
 
 jobs:
   release-check:
+    if: github.repository_owner == 'adafruit'
     runs-on: ubuntu-latest
     steps:
     - name: Set up requested Python version
