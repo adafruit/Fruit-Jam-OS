@@ -176,13 +176,14 @@ if __name__ == '__main__':
                 tag_name=new_tag,
             )
 
-            print(new_release)
+            #print(new_release)
 
             github_output_path = os.environ.get('GITHUB_OUTPUT')
 
             if github_output_path:
                 with open(github_output_path, 'a') as f:
                     f.write(f"release_created=true\n")
+                    f.write(f"assets_upload_url={new_release['upload_url']}\n")
 
             print(f"Successfully created release: {new_tag}")
             print(f"Release URL: {new_release['html_url']}")
@@ -192,4 +193,4 @@ if __name__ == '__main__':
         if github_output_path:
             with open(github_output_path, 'a') as f:
                 f.write(f"release_created=false\n")
-
+                f.write(f"assets_upload_url=None\n")
