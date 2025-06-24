@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.check_release.outputs.release_created }}
+      assets_upload_url: ${{ steps.check_release.outputs.assets_upload_url }}
     steps:
     - name: Set up requested Python version
       uses: actions/setup-python@v5
@@ -72,4 +73,4 @@ jobs:
         with:
           asset_path: "dist/*"
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          upload_url: ${{ github.event.release.upload_url }}
+          upload_url: ${{ needs.release_check.outputs.assets_upload_url }}
