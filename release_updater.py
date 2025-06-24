@@ -176,6 +176,8 @@ if __name__ == '__main__':
                 tag_name=new_tag,
             )
 
+            print(new_release)
+
             github_output_path = os.environ.get('GITHUB_OUTPUT')
 
             if github_output_path:
