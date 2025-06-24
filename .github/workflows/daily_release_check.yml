@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  release-check:
+  release_check:
     if: github.repository_owner == 'adafruit'
     runs-on: ubuntu-latest
     outputs:
@@ -41,8 +41,9 @@ jobs:
       run: |
         python release_updater.py make_release
 
-  upload-release-assets:
-    if: github.repository_owner == 'adafruit' && needs.release-check.outputs.release_created == 'true'
+  upload_release_assets:
+    needs: release_check
+    if: github.repository_owner == 'adafruit' && needs.release_check.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Set up requested Python version
