@@ -19,7 +19,8 @@ LEARN_PROJECT_URLS = [
     "https://cdn-learn.adafruit.com/downloads/zip/3194422/Metro/Metro_RP2350_Breakout.zip?timestamp={}",
     "https://cdn-learn.adafruit.com/downloads/zip/3196755/Metro/Metro_RP2350_Chips_Challenge.zip?timestamp={}",
     "https://cdn-learn.adafruit.com/downloads/zip/3198116/Metro/Metro_RP2350_Minesweeper.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3198279/Fruit_Jam/Larsio_Paint_Music.zip?timestamp=1750522464"
+    "https://cdn-learn.adafruit.com/downloads/zip/3198279/Fruit_Jam/Larsio_Paint_Music.zip?timestamp={}",
+    "https://cdn-learn.adafruit.com/downloads/zip/3203853/Fruit_Jam/Fruit_Jam_IRC_Client.zip?timestamp={}",
 ]
 
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
