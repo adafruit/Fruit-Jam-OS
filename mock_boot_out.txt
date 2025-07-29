@@ -1,4 +1,4 @@
-Adafruit CircuitPython 10.0.0-alpha.4-2-g01da5c7c88-dirty on 2025-05-07; Adafruit Fruit Jam with rp2350b
+Adafruit CircuitPython 10.0.0-beta.0 on 2025-07-15; Adafruit Fruit Jam with rp2350b
 Board ID:adafruit_fruit_jam
 UID:
 boot.py output:
