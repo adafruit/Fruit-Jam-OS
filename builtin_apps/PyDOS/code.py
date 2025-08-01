@@ -89,8 +89,8 @@ def PyDOS():
     if Pydos_ui:
         (envVars["_scrHeight"],envVars["_scrWidth"]) = Pydos_ui.get_screensize()
     else:
-        envVars["_scrHeight"] = 29
-        envVars["_scrWidth"] = 79
+        envVars["_scrHeight"] = 23
+        envVars["_scrWidth"] = 89
     scrWdth = int(envVars["_scrWidth"])
 
     wldCLen = 0
