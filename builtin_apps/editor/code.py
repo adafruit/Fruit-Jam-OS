@@ -37,11 +37,10 @@ highlight_palette[1] = 0xFFFFFF
 highlight_palette[2] = 0xC9C9C9
 
 
-
+tpm = TilePaletteMapper(highlight_palette, 2)
 terminal_area = TileGrid(bitmap=font.bitmap, width=screen_size[0], height=screen_size[1],
-                         tile_width=char_size[0], tile_height=char_size[1])
+                         tile_width=char_size[0], tile_height=char_size[1], pixel_shader=tpm)
 
-tpm = TilePaletteMapper(highlight_palette, 2, terminal_area)
 for x in range(screen_size[0]):
     tpm[x,screen_size[1]-1] = [2,0]
 

@@ -98,6 +98,7 @@ if pathlib.Path("launcher.conf.json").exists():
 DIR_IN = 0x80
 mouse_interface_index, mouse_endpoint_address = None, None
 mouse = None
+mouse_was_attached = None
 
 if "use_mouse" in launcher_config and launcher_config["use_mouse"]:
 
