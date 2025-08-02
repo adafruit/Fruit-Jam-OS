@@ -13,7 +13,7 @@ except:
     format_exception = lambda err,value=None,tb=None: [err]
 if not sep+'lib' in path:
     path.insert(1,sep+'lib')
-path.append(sep+'PyBasic')
+path.append(f'{sep}apps{sep}PyBasic')
 try:
     from pydos_ui import Pydos_ui
 except ImportError:
@@ -78,19 +78,23 @@ def PyDOS():
     global envVars
     if "envVars" not in globals().keys():
         envVars = {}
-    _VER = "1.51-fruitjam"
+    _VER = "1.52-fruitjam"
     prmpVals = ['>','(',')','&','|','\x1b','\b','<','=',' ',_VER,'\n','$','']
 
-    print("Starting Py-DOS...")
-    envVars["PATH"] = sep+";/PyBasic"
+    print("Starting Py-DOS... Type 'help' for help.")
+    envVars["PATH"] = f'{sep};{sep}apps{sep}PyDOS;{sep}apps{sep}PyBasic'
     envVars["PROMPT"] = "$P$G"
     envVars["LIB"] = ";".join(path[1:])
     envVars["DIRSEP"] = sep
     if Pydos_ui:
         (envVars["_scrHeight"],envVars["_scrWidth"]) = Pydos_ui.get_screensize()
     else:
-        envVars["_scrHeight"] = 23
-        envVars["_scrWidth"] = 89
+        try:
+            envVars["_scrHeight"] = runtime.display.root_group[0].height
+            envVars["_scrWidth"] = runtime.display.root_group[0].width - 1
+        except:
+            envVars["_scrHeight"] = 24
+            envVars["_scrWidth"] = 89
     scrWdth = int(envVars["_scrWidth"])
 
     wldCLen = 0
@@ -674,11 +678,13 @@ def PyDOS():
         if cmd == "" or cmd == "REM":
             continue
         elif cmd == "HELP":
-            print("File system Commands: DIR, RENAME, DEL, TYPE, CD, MKDIR, RMDIR, COPY")
-            print("Environment Commands: HELP, SET, PROMPT, PATH")
-            print("Operating System Commands: EXIT, VER, MEM, DATE, TIME")
+            print("File Commands: DIR[/p][/w][/s], RENAME, DEL[/s], TYPE[/p], CD, MKDIR, RMDIR[/s], COPY[/y]")
+            print("Environment Commands: HELP, SET[/p][/a], PROMPT, PATH")
+            print("Operating System Commands: EXIT, VER, MEM, DATE [mm-dd-yy], TIME [hh:mm:ss]")
             print("Batch Commands: GOTO, IF, ECHO, PAUSE")
-            print("Command to execute a single Python command: PEXEC")
+            print("Command to execute a single Python command: PEXEC [command]")
+            print("Run a Python program: [path]program[.py]")
+            print("Run a DOS batch file: [path]program[.bat]")
         elif cmd == "DIR":
             if len(args) == 1:
                 prDir(os.getcwd()[(2 if os.getcwd()[1:2]==":" else 0):],swBits)
