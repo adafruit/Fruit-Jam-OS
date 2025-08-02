@@ -81,7 +81,7 @@ def PyDOS():
     _VER = "1.52-fruitjam"
     prmpVals = ['>','(',')','&','|','\x1b','\b','<','=',' ',_VER,'\n','$','']
 
-    print("Starting Py-DOS...")
+    print("Starting Py-DOS... Type 'help' for help.")
     envVars["PATH"] = f'{sep};{sep}apps{sep}PyDOS;{sep}apps{sep}PyBasic'
     envVars["PROMPT"] = "$P$G"
     envVars["LIB"] = ";".join(path[1:])
@@ -683,6 +683,8 @@ def PyDOS():
             print("Operating System Commands: EXIT, VER, MEM, DATE [mm-dd-yy], TIME [hh:mm:ss]")
             print("Batch Commands: GOTO, IF, ECHO, PAUSE")
             print("Command to execute a single Python command: PEXEC")
+            print("Run a Python program: [path]program[.py]")
+            print("Run a DOS batch file: [path]program[.bat]")
         elif cmd == "DIR":
             if len(args) == 1:
                 prDir(os.getcwd()[(2 if os.getcwd()[1:2]==":" else 0):],swBits)
