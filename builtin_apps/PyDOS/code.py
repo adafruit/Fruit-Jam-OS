@@ -682,7 +682,7 @@ def PyDOS():
             print("Environment Commands: HELP, SET[/p][/a], PROMPT, PATH")
             print("Operating System Commands: EXIT, VER, MEM, DATE [mm-dd-yy], TIME [hh:mm:ss]")
             print("Batch Commands: GOTO, IF, ECHO, PAUSE")
-            print("Command to execute a single Python command: PEXEC")
+            print("Command to execute a single Python command: PEXEC [command]")
             print("Run a Python program: [path]program[.py]")
             print("Run a DOS batch file: [path]program[.bat]")
         elif cmd == "DIR":
