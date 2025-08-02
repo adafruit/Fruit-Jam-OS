@@ -678,8 +678,8 @@ def PyDOS():
         if cmd == "" or cmd == "REM":
             continue
         elif cmd == "HELP":
-            print("File system Commands: DIR, RENAME, DEL, TYPE, CD, MKDIR, RMDIR, COPY")
-            print("Environment Commands: HELP, SET, PROMPT, PATH")
+            print("File Commands: DIR[/p][/w][/s], RENAME, DEL[/s], TYPE[/p], CD, MKDIR, RMDIR[/s], COPY[/y]")
+            print("Environment Commands: HELP, SET[/p][/a], PROMPT, PATH")
             print("Operating System Commands: EXIT, VER, MEM, DATE [mm-dd-yy], TIME [hh:mm:ss]")
             print("Batch Commands: GOTO, IF, ECHO, PAUSE")
             print("Command to execute a single Python command: PEXEC")
