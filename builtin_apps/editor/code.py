@@ -3,13 +3,14 @@ import os
 
 import supervisor
 from displayio import Group, Palette, TileGrid
-import terminalio
 from adafruit_display_text.bitmap_label import Label
 from adafruit_editor import editor, picker
 from tilepalettemapper import TilePaletteMapper
 from adafruit_argv_file import read_argv, write_argv
 from adafruit_fruitjam.peripherals import request_display_config
 from adafruit_usb_host_mouse import find_and_init_boot_mouse
+import terminalio
+import usb
 
 print(f"cwd in editor/code.py: {os.getcwd()}")
 
@@ -24,7 +25,6 @@ display.root_group = main_group
 font_palette = Palette(2)
 font_palette[0] = 0x000000
 font_palette[1] = 0xFFFFFF
-
 
 font = terminalio.FONT
 char_size = font.get_bounding_box()
@@ -62,7 +62,14 @@ if args is not None and len(args) > 0:
 else:
     file = picker.pick_file(terminal)
 
-mouse = find_and_init_boot_mouse()
+usb_device_count = 0
+for dev in usb.core.find(find_all=True):
+    usb_device_count += 1
+
+mouse = None
+if usb_device_count > 1:
+    mouse = find_and_init_boot_mouse()
+
 if mouse is not None:
     mouse.x = display.width - 6
     main_group.append(mouse.tilegrid)
