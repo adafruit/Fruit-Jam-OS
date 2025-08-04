@@ -1261,7 +1261,9 @@ def PyDOS():
                 print("Illegal switch, Command Format: PEXEC[/q] python command")
 
         elif cmd == "READONLY":
-            if readonly:
+            if imp != "C":
+                print("READONLY command is only available when running on CirucitPython.")
+            elif readonly:
                 print("The system is already set to read-only.")
             else:
                 if input("Setting the system to read-only will cause the Fruit Jam to restart? (y/n): ").upper() == "Y":
