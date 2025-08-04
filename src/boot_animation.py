@@ -20,18 +20,28 @@ display = supervisor.runtime.display
 display.auto_refresh = False
 
 i2c = board.I2C()
-dac = adafruit_tlv320.TLV320DAC3100(i2c)
+# Check if DAC is connected
+while not i2c.try_lock():
+    time.sleep(0.01)
+if 0x18 in i2c.scan():
+    ltv320_present = True
+else:
+    ltv320_present = False
+i2c.unlock()
 
-# set sample rate & bit depth
-dac.configure_clocks(sample_rate=11030, bit_depth=16)
+if ltv320_present:
+    dac = adafruit_tlv320.TLV320DAC3100(i2c)
 
-# use headphones
-dac.headphone_output = True
-dac.headphone_volume = -15  # dB
+    # set sample rate & bit depth
+    dac.configure_clocks(sample_rate=11030, bit_depth=16)
 
-wave_file = open("/boot_animation/ada_fruitjam_boot_jingle.wav", "rb")
-wave = WaveFile(wave_file)
-audio = audiobusio.I2SOut(board.I2S_BCLK, board.I2S_WS, board.I2S_DIN)
+    # use headphones
+    dac.headphone_output = True
+    dac.headphone_volume = -15  # dB
+
+    wave_file = open("/boot_animation/ada_fruitjam_boot_jingle.wav", "rb")
+    wave = WaveFile(wave_file)
+    audio = audiobusio.I2SOut(board.I2S_BCLK, board.I2S_WS, board.I2S_DIN)
 
 
 class OvershootAnimator:
@@ -621,7 +631,8 @@ display.root_group = main_group
 
 start_time = time.monotonic()
 
-audio.play(wave)
+if ltv320_present:
+    audio.play(wave)
 
 while True:
     now = time.monotonic()
@@ -668,8 +679,9 @@ while True:
     if not still_going:
         break
 
-while audio.playing:
-    pass
+if ltv320_present:
+    while audio.playing:
+        pass
 
 supervisor.set_next_code_file("code.py")
 supervisor.reload()
