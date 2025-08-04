@@ -32,10 +32,17 @@ import gc
 imp = "B"
 if implementation.name.upper() == "MICROPYTHON":
     from micropython import mem_info
+    readonly = False
     imp = "M"
 elif implementation.name.upper() == "CIRCUITPYTHON":
     if not Pydos_ui:
         from supervisor import runtime, reload
+
+    import storage
+    import microcontroller
+    from adafruit_argv_file import argv_filename
+    readonly = storage.getmount("/").readonly
+
     imp = "C"
 
 gc.collect()
@@ -82,6 +89,18 @@ def PyDOS():
     prmpVals = ['>','(',')','&','|','\x1b','\b','<','=',' ',_VER,'\n','$','']
 
     print("Starting Py-DOS... Type 'help' for help.")
+    if readonly:
+        print("Warning: Py-DOS is running in read-only mode, some commands may not work.")
+        if input("Press Enter to continue or 'R' to restart in read-write mode: ").upper() == 'R':
+            print("\nNote: You can not modify files using the CIRCUITPY drive from a")
+            print("connected host computer in read-write mode. After restarting,")
+            print("you can use the 'readonly' command in PyDOS to return to read-only mode.\n")
+            if input('Are you sure? (Y/N): ').upper() == 'Y':
+                boot_args_file = argv_filename("/boot.py") 
+                with open(boot_args_file, "w") as f: 
+                    f.write('[false, "/code.py"]')
+                microcontroller.reset()
+
     envVars["PATH"] = f'{sep};{sep}apps{sep}PyDOS;{sep}apps{sep}PyBasic'
     envVars["PROMPT"] = "$P$G"
     envVars["LIB"] = ";".join(path[1:])
@@ -679,7 +698,7 @@ def PyDOS():
             continue
         elif cmd == "HELP":
             print("File Commands: DIR[/p][/w][/s], RENAME, DEL[/s], TYPE[/p], CD, MKDIR, RMDIR[/s], COPY[/y]")
-            print("Environment Commands: HELP, SET[/p][/a], PROMPT, PATH")
+            print("Environment Commands: HELP, SET[/p][/a], PROMPT, PATH, READONLY")
             print("Operating System Commands: EXIT, VER, MEM, DATE [mm-dd-yy], TIME [hh:mm:ss]")
             print("Batch Commands: GOTO, IF, ECHO, PAUSE")
             print("Command to execute a single Python command: PEXEC [command]")
@@ -1240,6 +1259,16 @@ def PyDOS():
                 del pcmd
             else:
                 print("Illegal switch, Command Format: PEXEC[/q] python command")
+
+        elif cmd == "READONLY":
+            if readonly:
+                print("The system is already set to read-only.")
+            else:
+                if input("Setting the system to read-only will cause the Fruit Jam to restart? (y/n): ").upper() == "Y":
+                    boot_args_file = argv_filename("/boot.py") 
+                    with open(boot_args_file, "w") as f: 
+                        f.write('[true, "/code.py"]')
+                    microcontroller.reset()
 
         elif cmd == "EXIT":
             if activeBAT:
