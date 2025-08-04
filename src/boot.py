@@ -40,4 +40,8 @@ if args is not None and len(args) > 0:
                                   working_directory="/".join(next_code_file.split("/")[:-1]))
 
 else:
-    supervisor.set_next_code_file("boot_animation.py")
+    # skip boot animation if no display
+    if supervisor.runtime.display is None:
+        supervisor.set_next_code_file("code.py")
+    else:
+        supervisor.set_next_code_file("boot_animation.py")
