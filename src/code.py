@@ -9,6 +9,7 @@ import atexit
 import json
 import math
 import displayio
+import os
 import supervisor
 import sys
 import terminalio
