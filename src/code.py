@@ -24,7 +24,7 @@ from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload
 import adafruit_usb_host_descriptors
 from adafruit_anchored_group import AnchoredGroup
-from adafruit_fruitjam.peripherals import request_display_config
+from adafruit_fruitjam.peripherals import request_display_config, VALID_DISPLAY_SIZES
 from adafruit_argv_file import read_argv, write_argv
 
 """
@@ -53,14 +53,18 @@ if args is not None and len(args) > 0:
     print(f"launching: {next_code_file}")
     supervisor.reload()
 
-# read environment variables
-aspect_ratio_4x3 = os.getenv("FRUIT_JAM_OS_4x3", 0)
-
-if aspect_ratio_4x3:
-    request_display_config(640, 480)
-else:
-    request_display_config(720, 400)
 display = supervisor.runtime.display
+if display is None:
+    width_config = os.getenv("CIRCUITPY_DISPLAY_WIDTH")
+    if width_config is None:
+        request_display_config(720, 400)
+    elif width_config in [x[0] for x in VALID_DISPLAY_SIZES]:
+        for display_size in VALID_DISPLAY_SIZES:
+            if display_size[0] == width_config:
+                request_display_config(*display_size)
+                break
+    else:
+        raise ValueError(f"Invalid display size. Must be one of: {VALID_DISPLAY_SIZES}")
 
 scale = 1
 if display.width > 360:
@@ -142,12 +146,8 @@ if "use_mouse" in launcher_config and launcher_config["use_mouse"]:
 
     mouse_buf = array.array("b", [0] * 8)
 
-if aspect_ratio_4x3:
-    WIDTH = 248
-    HEIGHT = 218
-else:
-    WIDTH = 280
-    HEIGHT = 182
+WIDTH = int(280 / 360 * display.width // scale)
+HEIGHT = int(182 / 200 * display.height // scale)
 
 config = {
     "menu_title": "Launcher Menu",
