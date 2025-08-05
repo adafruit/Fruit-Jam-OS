@@ -186,6 +186,7 @@ config = {
 }
 
 cell_width = WIDTH // config["width"]
+page_size = config["width"] * config["height"]
 
 default_icon_bmp, default_icon_palette = adafruit_imageload.load("launcher_assets/default_icon.bmp")
 default_icon_palette.make_transparent(0)
@@ -562,7 +563,7 @@ while True:
                 print("left click")
                 clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
                 if clicked_cell is not None:
-                    index = clicked_cell[1] * config["width"] + clicked_cell[0]
+                    index = (clicked_cell[1] * config["width"] + clicked_cell[0]) + (cur_page * page_size)
 
                 if right_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
                     page_right()
