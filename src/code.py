@@ -23,7 +23,7 @@ from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload
 import adafruit_usb_host_descriptors
 from adafruit_anchored_group import AnchoredGroup
-from adafruit_fruitjam.peripherals import request_display_config
+from adafruit_fruitjam.peripherals import request_display_config, VALID_DISPLAY_SIZES
 from adafruit_argv_file import read_argv, write_argv
 
 """
@@ -52,7 +52,15 @@ if args is not None and len(args) > 0:
     print(f"launching: {next_code_file}")
     supervisor.reload()
 
-request_display_config(720, 400)
+if (width_config := os.getenv("CIRCUITPY_DISPLAY_WIDTH")) is not None:
+    if width_config not in [x[0] for x in VALID_DISPLAY_SIZES]:
+        raise ValueError(f"Invalid display size. Must be one of: {VALID_DISPLAY_SIZES}")
+    for display_size in VALID_DISPLAY_SIZES:
+        if display_size[0] == width_config:
+            break
+else:
+    display_size = (720, 400)
+request_display_config(*display_size)
 display = supervisor.runtime.display
 
 scale = 1
@@ -137,8 +145,8 @@ if "use_mouse" in launcher_config and launcher_config["use_mouse"]:
 
     mouse_buf = array.array("b", [0] * 8)
 
-WIDTH = 280
-HEIGHT = 182
+WIDTH = int(280 / 360 * display.width // scale)
+HEIGHT = int(182 / 200 * display.height // scale)
 
 config = {
     "menu_title": "Launcher Menu",
@@ -179,10 +187,13 @@ config = {
 }
 
 cell_width = WIDTH // config["width"]
+cell_height = HEIGHT // config["height"]
 
 default_icon_bmp, default_icon_palette = adafruit_imageload.load("launcher_assets/default_icon.bmp")
 default_icon_palette.make_transparent(0)
-menu_grid = GridLayout(x=40, y=16, width=WIDTH, height=HEIGHT, grid_size=(config["width"], config["height"]),
+menu_grid = GridLayout(x=(display.width // scale - WIDTH) // 2,
+                       y=(display.height // scale - HEIGHT) // 2,
+                       width=WIDTH, height=HEIGHT, grid_size=(config["width"], config["height"]),
                        divider_lines=False)
 scaled_group.append(menu_grid)
 
@@ -269,8 +280,9 @@ def _create_cell_group(app):
         cell_group.append(icon_tg)
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
-    title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
+    title_txt = TextBox(font, text=app["title"], width=cell_width, height=18,
                         align=TextBox.ALIGN_CENTER, color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
+    icon_tg.y = (cell_height - icon_tg.tile_height - title_txt.height) // 2
     cell_group.append(title_txt)
     title_txt.anchor_point = (0, 0)
     title_txt.anchored_position = (0, icon_tg.y + icon_tg.tile_height)
@@ -290,7 +302,7 @@ def _reuse_cell_group(app, cell_group):
         icon_tg.pixel_shader = icon_palette
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
-    # title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
+    # title_txt = TextBox(font, text=app["title"], width=cell_width, height=18,
     #                     align=TextBox.ALIGN_CENTER, color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
     # cell_group.append(title_txt)
     title_txt = cell_group[1]
@@ -340,7 +352,7 @@ def display_page(page_index):
         print(f"{grid_index} | {grid_index % config["width"], grid_index // config["width"]}")
 
 
-page_txt = Label(terminalio.FONT, text="", scale=2, color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
+page_txt = Label(terminalio.FONT, text="", scale=scale, color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
 page_txt.anchor_point = (1.0, 1.0)
 page_txt.anchored_position = (display.width - 2, display.height - 2)
 main_group.append(page_txt)
