@@ -9,6 +9,7 @@ import atexit
 import json
 import math
 import displayio
+import os
 import supervisor
 import sys
 import terminalio
@@ -52,7 +53,13 @@ if args is not None and len(args) > 0:
     print(f"launching: {next_code_file}")
     supervisor.reload()
 
-request_display_config(720, 400)
+# read environment variables
+aspect_ratio_4x3 = os.getenv("FRUIT_JAM_OS_4x3", 0)
+
+if aspect_ratio_4x3:
+    request_display_config(640, 480)
+else:
+    request_display_config(720, 400)
 display = supervisor.runtime.display
 
 scale = 1
@@ -135,8 +142,12 @@ if "use_mouse" in launcher_config and launcher_config["use_mouse"]:
 
     mouse_buf = array.array("b", [0] * 8)
 
-WIDTH = 280
-HEIGHT = 182
+if aspect_ratio_4x3:
+    WIDTH = 248
+    HEIGHT = 218
+else:
+    WIDTH = 280
+    HEIGHT = 182
 
 config = {
     "menu_title": "Launcher Menu",
@@ -177,10 +188,13 @@ config = {
 }
 
 cell_width = WIDTH // config["width"]
+cell_height = HEIGHT // config["height"]
 
 default_icon_bmp, default_icon_palette = adafruit_imageload.load("launcher_assets/default_icon.bmp")
 default_icon_palette.make_transparent(0)
-menu_grid = GridLayout(x=40, y=16, width=WIDTH, height=HEIGHT, grid_size=(config["width"], config["height"]),
+menu_grid = GridLayout(x=(display.width // scale - WIDTH) // 2,
+                       y=(display.height // scale - HEIGHT) // 2,
+                       width=WIDTH, height=HEIGHT, grid_size=(config["width"], config["height"]),
                        divider_lines=False)
 scaled_group.append(menu_grid)
 
@@ -267,8 +281,9 @@ def _create_cell_group(app):
         cell_group.append(icon_tg)
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
-    title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
+    title_txt = TextBox(font, text=app["title"], width=cell_width, height=18,
                         align=TextBox.ALIGN_CENTER)
+    icon_tg.y = (cell_height - icon_tg.tile_height - title_txt.height) // 2
     cell_group.append(title_txt)
     title_txt.anchor_point = (0, 0)
     title_txt.anchored_position = (0, icon_tg.y + icon_tg.tile_height)
@@ -288,7 +303,7 @@ def _reuse_cell_group(app, cell_group):
         icon_tg.pixel_shader = icon_palette
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
-    # title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
+    # title_txt = TextBox(font, text=app["title"], width=cell_width, height=18,
     #                     align=TextBox.ALIGN_CENTER)
     # cell_group.append(title_txt)
     title_txt = cell_group[1]
