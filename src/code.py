@@ -9,6 +9,7 @@ import atexit
 import json
 import math
 import displayio
+import os
 import supervisor
 import sys
 import terminalio
@@ -52,6 +53,14 @@ if args is not None and len(args) > 0:
     print(f"launching: {next_code_file}")
     supervisor.reload()
 
+# read environment variables
+color_palette = {
+    "bg":     os.getenv("FRUIT_JAM_OS_BG",     0x222222),
+    "fg":     os.getenv("FRUIT_JAM_OS_FG",     0xffffff),
+    "accent": os.getenv("FRUIT_JAM_OS_ACCENT", 0x008800),
+    "arrow":  os.getenv("FRUIT_JAM_OS_ARROW",  -1),
+}
+
 request_display_config(720, 400)
 display = supervisor.runtime.display
 
@@ -70,7 +79,7 @@ display.root_group = main_group
 
 background_bmp = displayio.Bitmap(display.width, display.height, 1)
 bg_palette = displayio.Palette(1)
-bg_palette[0] = 0x222222
+bg_palette[0] = color_palette["bg"]
 bg_tg = displayio.TileGrid(bitmap=background_bmp, pixel_shader=bg_palette)
 scaled_group.append(bg_tg)
 
@@ -184,7 +193,7 @@ menu_grid = GridLayout(x=40, y=16, width=WIDTH, height=HEIGHT, grid_size=(config
                        divider_lines=False)
 scaled_group.append(menu_grid)
 
-menu_title_txt = Label(font, text="Fruit Jam OS")
+menu_title_txt = Label(font, text="Fruit Jam OS", color=color_palette["fg"])
 menu_title_txt.anchor_point = (0.5, 0.5)
 menu_title_txt.anchored_position = (display.width // (2 * scale), 2)
 scaled_group.append(menu_title_txt)
@@ -268,7 +277,7 @@ def _create_cell_group(app):
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
     title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
-                        align=TextBox.ALIGN_CENTER)
+                        align=TextBox.ALIGN_CENTER, color=color_palette["fg"])
     cell_group.append(title_txt)
     title_txt.anchor_point = (0, 0)
     title_txt.anchored_position = (0, icon_tg.y + icon_tg.tile_height)
@@ -289,7 +298,7 @@ def _reuse_cell_group(app, cell_group):
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
     # title_txt = TextBox(font, text=app["title"], width=WIDTH // config["width"], height=18,
-    #                     align=TextBox.ALIGN_CENTER)
+    #                     align=TextBox.ALIGN_CENTER, color=color_palette["fg"])
     # cell_group.append(title_txt)
     title_txt = cell_group[1]
     title_txt.text = app["title"]
@@ -338,7 +347,7 @@ def display_page(page_index):
         print(f"{grid_index} | {grid_index % config["width"], grid_index // config["width"]}")
 
 
-page_txt = Label(terminalio.FONT, text="", scale=2)
+page_txt = Label(terminalio.FONT, text="", scale=2, color=color_palette["fg"])
 page_txt.anchor_point = (1.0, 1.0)
 page_txt.anchored_position = (display.width - 2, display.height - 2)
 main_group.append(page_txt)
@@ -350,6 +359,8 @@ left_bmp, left_palette = adafruit_imageload.load("launcher_assets/arrow_left.bmp
 left_palette.make_transparent(0)
 right_bmp, right_palette = adafruit_imageload.load("launcher_assets/arrow_right.bmp")
 right_palette.make_transparent(0)
+if color_palette["arrow"] >= 0:
+    left_palette[2] = right_palette[2] = color_palette["arrow"]
 
 left_tg = AnchoredTileGrid(bitmap=left_bmp, pixel_shader=left_palette)
 left_tg.anchor_point = (0, 0.5)
@@ -371,8 +382,9 @@ if mouse:
     scaled_group.append(mouse_tg)
 
 
-help_txt = Label(terminalio.FONT, text="[Arrow]: Move\n[E]:     Edit\n[Enter]:  Run\n[1-9]:   Page")
-# help_txt = TextBox(terminalio.FONT, width=88, height=30, align=TextBox.ALIGN_RIGHT, background_color=0x008800, text="[E]: Edit\n[Enter]:  Run")
+help_txt = Label(terminalio.FONT, text="[Arrow]: Move\n[E]:     Edit\n[Enter]:  Run\n[1-9]:   Page",
+                 color=color_palette["fg"])
+# help_txt = TextBox(terminalio.FONT, width=88, height=30, align=TextBox.ALIGN_RIGHT, background_color=color_palette["accent"], text="[E]: Edit\n[Enter]:  Run")
 help_txt.anchor_point = (0, 0)
 
 help_txt.anchored_position = (2, 2)
@@ -409,10 +421,10 @@ def change_selected(new_selected):
 
     # tuple means an item in the grid is selected
     if isinstance(new_selected, tuple):
-        menu_grid.get_content(new_selected)[1].background_color = 0x008800
+        menu_grid.get_content(new_selected)[1].background_color = color_palette["accent"]
     # TileGrid means arrow is selected
     elif isinstance(new_selected, AnchoredTileGrid):
-        new_selected.pixel_shader[2] = 0x008800
+        new_selected.pixel_shader[2] = color_palette["accent"]
     selected = new_selected
 
 
@@ -528,7 +540,7 @@ while True:
 
         handle_key_press(c)
         print("selected", selected)
-        # app_titles[selected].background_color = 0x008800
+        # app_titles[selected].background_color = color_palette["accent"]
 
     if mouse:
         try:
