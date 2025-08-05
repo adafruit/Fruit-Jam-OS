@@ -62,17 +62,15 @@ color_palette = {
 }
 
 display = supervisor.runtime.display
-if display is None:
-    width_config = os.getenv("CIRCUITPY_DISPLAY_WIDTH")
-    if width_config is None:
-        request_display_config(720, 400)
-    elif width_config in [x[0] for x in VALID_DISPLAY_SIZES]:
-        for display_size in VALID_DISPLAY_SIZES:
-            if display_size[0] == width_config:
-                request_display_config(*display_size)
-                break
-    else:
+if (width_config := os.getenv("CIRCUITPY_DISPLAY_WIDTH")) is not None:
+    if width_config not in [x[0] for x in VALID_DISPLAY_SIZES]:
         raise ValueError(f"Invalid display size. Must be one of: {VALID_DISPLAY_SIZES}")
+    for display_size in VALID_DISPLAY_SIZES:
+        if display_size[0] == width_config:
+            break
+else:
+    display_size = (720, 400)
+request_display_config(*display_size)
 
 scale = 1
 if display.width > 360:
