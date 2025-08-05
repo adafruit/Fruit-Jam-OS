@@ -320,13 +320,13 @@ def _unhide_cell_group(cell_group):
 
 
 def display_page(page_index):
-    max_pages = math.ceil(len(apps) / 6)
+    max_pages = math.ceil(len(apps) / page_size)
     page_txt.text = f"{page_index + 1}/{max_pages}"
 
-    for grid_index in range(6):
+    for grid_index in range(page_size):
         grid_pos = (grid_index % config["width"], grid_index // config["width"])
         try:
-            cur_app = apps[grid_index + (page_index * 6)]
+            cur_app = apps[grid_index + (page_index * page_size)]
         except IndexError:
             try:
                 cell_group = menu_grid.get_content(grid_pos)
@@ -375,7 +375,7 @@ original_arrow_btn_color = left_palette[2]
 scaled_group.append(left_tg)
 scaled_group.append(right_tg)
 
-if len(apps) <= 6:
+if len(apps) <= page_size:
     right_tg.hidden = True
     left_tg.hidden = True
 
@@ -433,7 +433,7 @@ change_selected((0, 0))
 
 def page_right():
     global cur_page
-    if cur_page < math.ceil(len(apps) / 6) - 1:
+    if cur_page < math.ceil(len(apps) / page_size) - 1:
         cur_page += 1
         display_page(cur_page)
 
@@ -450,7 +450,7 @@ def handle_key_press(key):
     # up key
     if key == "\x1b[A":
         if isinstance(selected, tuple):
-            change_selected((selected[0], (selected[1] - 1) % 2))
+            change_selected((selected[0], (selected[1] - 1) % config["height"]))
         elif selected is left_tg:
             change_selected((0, 0))
         elif selected is right_tg:
@@ -460,7 +460,7 @@ def handle_key_press(key):
     # down key
     elif key == "\x1b[B":
         if isinstance(selected, tuple):
-            change_selected((selected[0], (selected[1] + 1) % 2))
+            change_selected((selected[0], (selected[1] + 1) % config["height"]))
         elif selected is left_tg:
             change_selected((0, 1))
         elif selected is right_tg:
@@ -475,7 +475,7 @@ def handle_key_press(key):
             elif not left_tg.hidden:
                 change_selected(left_tg)
             else:
-                change_selected(((selected[0] - 1) % 3, selected[1]))
+                change_selected(((selected[0] - 1) % config["width"], selected[1]))
         elif selected is left_tg:
             change_selected(right_tg)
         elif selected is right_tg:
@@ -489,7 +489,7 @@ def handle_key_press(key):
             elif not right_tg.hidden:
                 change_selected(right_tg)
             else:
-                change_selected(((selected[0] + 1) % 3, selected[1]))
+                change_selected(((selected[0] + 1) % config["width"], selected[1]))
         elif selected is left_tg:
             change_selected((0, 0))
         elif selected is right_tg:
@@ -497,7 +497,7 @@ def handle_key_press(key):
 
     elif key == "\n":
         if isinstance(selected, tuple):
-            index = (selected[1] * 3 + selected[0]) + (cur_page * 6)
+            index = (selected[1] * config["width"] + selected[0]) + (cur_page * page_size)
             if index >= len(apps):
                 index = None
             print("go!")
@@ -507,7 +507,7 @@ def handle_key_press(key):
             page_right()
     elif key == "e":
         if isinstance(selected, tuple):
-            editor_index = (selected[1] * 3 + selected[0]) + (cur_page * 6)
+            editor_index = (selected[1] * config["width"] + selected[0]) + (cur_page * page_size)
             if editor_index >= len(apps):
                 editor_index = None
 
@@ -515,12 +515,12 @@ def handle_key_press(key):
     elif key in "123456789":
         if key != "9":
             requested_page = int(key)
-            max_page = math.ceil(len(apps) / 6)
+            max_page = math.ceil(len(apps) / page_size)
             if requested_page <= max_page:
                 cur_page = requested_page - 1
                 display_page(requested_page-1)
         else:  # key == 9
-            max_page = math.ceil(len(apps) / 6)
+            max_page = math.ceil(len(apps) / page_size)
             cur_page = max_page - 1
             display_page(max_page - 1)
     else:
