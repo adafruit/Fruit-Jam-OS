@@ -61,7 +61,6 @@ color_palette = {
     "arrow":  os.getenv("FRUIT_JAM_OS_ARROW"),
 }
 
-display = supervisor.runtime.display
 if (width_config := os.getenv("CIRCUITPY_DISPLAY_WIDTH")) is not None:
     if width_config not in [x[0] for x in VALID_DISPLAY_SIZES]:
         raise ValueError(f"Invalid display size. Must be one of: {VALID_DISPLAY_SIZES}")
@@ -71,6 +70,7 @@ if (width_config := os.getenv("CIRCUITPY_DISPLAY_WIDTH")) is not None:
 else:
     display_size = (720, 400)
 request_display_config(*display_size)
+display = supervisor.runtime.display
 
 scale = 1
 if display.width > 360:
