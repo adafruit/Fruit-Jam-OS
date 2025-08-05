@@ -58,6 +58,7 @@ color_palette = {
     "bg":     os.getenv("FRUIT_JAM_OS_BG",     0x222222),
     "fg":     os.getenv("FRUIT_JAM_OS_FG",     0xffffff),
     "accent": os.getenv("FRUIT_JAM_OS_ACCENT", 0x008800),
+    "arrow":  os.getenv("FRUIT_JAM_OS_ARROW",  -1),
 }
 
 request_display_config(720, 400)
@@ -358,6 +359,8 @@ left_bmp, left_palette = adafruit_imageload.load("launcher_assets/arrow_left.bmp
 left_palette.make_transparent(0)
 right_bmp, right_palette = adafruit_imageload.load("launcher_assets/arrow_right.bmp")
 right_palette.make_transparent(0)
+if color_palette["arrow"] >= 0:
+    left_palette[2] = right_palette[2] = color_palette["arrow"]
 
 left_tg = AnchoredTileGrid(bitmap=left_bmp, pixel_shader=left_palette)
 left_tg.anchor_point = (0, 0.5)
