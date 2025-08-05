@@ -359,7 +359,7 @@ def display_page(page_index):
         print(f"{grid_index} | {grid_index % config["width"], grid_index // config["width"]}")
 
 
-page_txt = Label(terminalio.FONT, text="", scale=2, color=color_palette["fg"])
+page_txt = Label(terminalio.FONT, text="", scale=scale, color=color_palette["fg"])
 page_txt.anchor_point = (1.0, 1.0)
 page_txt.anchored_position = (display.width - 2, display.height - 2)
 main_group.append(page_txt)
