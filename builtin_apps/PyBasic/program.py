@@ -233,7 +233,9 @@ class Program:
         except OSError:
             raise OSError("Could not read file")
 
-        if file.rfind('/') != -1:
+        if file.rfind('/') == 0:
+            os.chdir("/")
+        elif file.rfind('/') != -1:
             os.chdir(file[:file.rfind('/')])
 
     def add_stmt(self, tokenlist):

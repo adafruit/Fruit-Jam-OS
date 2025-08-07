@@ -14,7 +14,9 @@ New: print_exception(e,e,e.__traceback__ if hasattr(e,'__traceback__') else None
 Added the following import (line 28):
 import os
 
-Added command to set current directory to folder loaded program is loaded from (line 236,237):
-if file.rfind('/') != -1:
+Added command to set current directory to folder loaded program is loaded from (line 236-239):
+if file.rfind('/') == 0:
+    os.chdir('/')
+elif file.rfind('/') != -1:
     os.chdir(file[:file.rfind('/')])
 
