@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 import gc
+import json
 
 import board
 import supervisor
@@ -12,6 +13,12 @@ import math
 import adafruit_tlv320
 from audiocore import WaveFile
 import audiobusio
+import adafruit_pathlib as pathlib
+
+launcher_config = {}
+if pathlib.Path("launcher.conf.json").exists():
+    with open("launcher.conf.json", "r") as f:
+        launcher_config = json.load(f)
 
 BOX_SIZE = (235, 107)
 TARGET_FPS = 70
@@ -35,9 +42,19 @@ if ltv320_present:
     # set sample rate & bit depth
     dac.configure_clocks(sample_rate=11030, bit_depth=16)
 
-    # use headphones
-    dac.headphone_output = True
-    dac.headphone_volume = -15  # dB
+    if "sound" in launcher_config:
+        if launcher_config["sound"] == "speaker":
+            # use speaker
+            dac.speaker_output = True
+            dac.speaker_volume = -40
+        else:
+            # use headphones
+            dac.headphone_output = True
+            dac.headphone_volume = -15  # dB
+    else:
+        # default to headphones
+        dac.headphone_output = True
+        dac.headphone_volume = -15  # dB
 
     wave_file = open("/boot_animation/ada_fruitjam_boot_jingle.wav", "rb")
     wave = WaveFile(wave_file)
