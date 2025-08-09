@@ -36,8 +36,9 @@ if implementation.name.upper() == "MICROPYTHON":
     imp = "M"
 elif implementation.name.upper() == "CIRCUITPYTHON":
     if not Pydos_ui:
-        from supervisor import runtime, reload
+        from supervisor import runtime
 
+    from supervisor import reload
     import storage
     import microcontroller
     from adafruit_argv_file import argv_filename
@@ -91,15 +92,25 @@ def PyDOS():
     print("Starting Py-DOS... Type 'help' for help.")
     if readonly:
         print("Warning: Py-DOS is running in read-only mode, some commands may not work.")
-        if input("Press Enter to continue or 'R' to restart in read-write mode: ").upper() == 'R':
-            print("\nNote: You can not modify files using the CIRCUITPY drive from a")
-            print("connected host computer in read-write mode. After restarting,")
-            print("you can use the 'readonly' command in PyDOS to return to read-only mode.\n")
-            if input('Are you sure? (Y/N): ').upper() == 'Y':
-                boot_args_file = argv_filename("/boot.py") 
-                with open(boot_args_file, "w") as f: 
-                    f.write('[false, "/code.py"]')
-                microcontroller.reset()
+        ans = 'N'
+        while ans[:1].upper() != "C" and ans[:1].upper() != "R":
+            ans = input("Press 'C' to continue or 'R' to restart in read-write mode: ")
+            if ans[:1].upper() == "R":
+                print("\nNote: You can not modify files using the CIRCUITPY drive from a")
+                print("connected host computer in read-write mode. After restarting,")
+                print("you can use the 'readonly' command in PyDOS to return to read-only mode.\n")
+                if input('Are you sure? (Y/N): ').upper() == 'Y':
+                    boot_args_file = argv_filename("/boot.py") 
+                    with open(boot_args_file, "w") as f: 
+                        f.write('[false, "/code.py"]')
+                    microcontroller.reset()
+                else: 
+                    break
+            elif ans[:1].upper() == "C":
+                break
+            else:
+                print("\nInvalid entry",ans[:1])
+            
 
     envVars["PATH"] = f'{sep};{sep}apps{sep}PyDOS;{sep}apps{sep}PyBasic'
     envVars["PROMPT"] = "$P$G"
