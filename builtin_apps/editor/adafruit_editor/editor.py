@@ -259,6 +259,7 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
     cursor = Cursor()
     terminal_tilegrid.pixel_shader[cursor.col,cursor.row] = [1, 0]
     old_cursor_pos = (cursor.col, cursor.row)
+    old_window_pos = (window.col, window.row)
     # try:
     #     visible_cursor.text = buffer[0][0]
     # except IndexError:
@@ -446,10 +447,12 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
         # print("updating visible cursor")
         # print(f"anchored pos: {((cursor.col * 6) - 1, (cursor.row * 12) + 20)}")
 
-        if old_cursor_pos != (cursor.col, cursor.row):
-            # print(f"old cursor: {old_cursor_pos}, new: {(cursor.col, cursor.row)}")
-            terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]] = [0,1]
-            terminal_tilegrid.pixel_shader[cursor.col, cursor.row] = [1,0]
+        if (old_cursor_pos[0] - old_window_pos[0] != cursor.col - window.col or
+                old_cursor_pos[1] - old_window_pos[1] != cursor.row - window.row):
+            #print(f"old cursor: {old_cursor_pos}, new: {(cursor.col, cursor.row)}")
+            #print(f"window: {window.row}, {window.col}")
+            terminal_tilegrid.pixel_shader[old_cursor_pos[0] - old_window_pos[0], old_cursor_pos[1] - old_window_pos[1]] = [0,1]
+            terminal_tilegrid.pixel_shader[cursor.col - window.col, cursor.row - window.row] = [1,0]
             # print(f"old: {terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]]} new: {terminal_tilegrid.pixel_shader[cursor.col, cursor.row]}")
 
             # visible_cursor.anchored_position = ((cursor.col * 6) - 1, (cursor.row * 12) + 20)
@@ -463,6 +466,7 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
 
 
         old_cursor_pos = (cursor.col, cursor.row)
+        old_window_pos = (window.col, window.row)
 
 def edit(filename, terminal=None, mouse=None, terminal_tilegrid=None):
     with MaybeDisableReload():
