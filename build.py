@@ -23,6 +23,10 @@ LEARN_PROJECT_URLS = [
     "https://cdn-learn.adafruit.com/downloads/zip/3203853/Fruit_Jam/Fruit_Jam_IRC_Client.zip?timestamp={}",
 ]
 
+GITHUB_REPOS = [
+    "relic-se/Fruit_Jam_Fruitris",
+]
+
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
     # Get font name without extension
     font_name = font_path.stem
@@ -148,10 +152,29 @@ def download_learn_projects():
             f.write(response.content)
 
 
+def download_github_assets():
+    for repo in GITHUB_REPOS:
+        request_url = "https://api.github.com/repos/{}/releases/latest".format(repo)
+        release_response = requests.get(request_url, allow_redirects=True)
+        release_data = release_response.json()
+        if "assets" not in release_data:
+            raise OSError("No assets present in latest release of {}".format(repo))
+        
+        for asset in release_data["assets"]:
+            filename = asset["name"]
+            asset_url = asset["browser_download_url"]
+            asset_response = requests.get(asset_url, allow_redirects=True)
+            with open(f"learn-projects/{filename}", 'wb') as f:
+                f.write(asset_response.content)
+
+
 def main():
 
     # download all learn project zips
     download_learn_projects()
+
+    # download all github project zips
+    download_github_assets()
 
     # Get the project root directory
     root_dir = Path(__file__).parent
