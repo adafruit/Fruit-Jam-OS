@@ -1,26 +1,24 @@
 from datetime import datetime
 import os
-import time
 import zipfile
 import shutil
 from pathlib import Path
-import requests
 from circup.commands import main as circup_cli
 
-# TODO: maybe change these to use the first URLs i.e. https://learn.adafruit.com/elements/3198279/download?type=zip
-#  instead of the redirect URLs that are direct to the CDN. That will make easier for users to add apps here.
-#  The code will need to follow the redirect and get the filename from the next URL.
-LEARN_PROJECT_URLS = [
-    "https://cdn-learn.adafruit.com/downloads/zip/3194974/Metro/Metro_RP2350_Snake.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3195762/Metro/Metro_RP2350_Memory/memory_game.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3195805/Metro/Metro_RP2350_CircuitPython_Matrix.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3194658/Metro/Metro_RP2350_FlappyNyanCat.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3196927/Metro/Metro_RP2350_Match3/match3_game.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3194422/Metro/Metro_RP2350_Breakout.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3196755/Metro/Metro_RP2350_Chips_Challenge.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3198116/Metro/Metro_RP2350_Minesweeper.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3198279/Fruit_Jam/Larsio_Paint_Music.zip?timestamp={}",
-    "https://cdn-learn.adafruit.com/downloads/zip/3203853/Fruit_Jam/Fruit_Jam_IRC_Client.zip?timestamp={}",
+
+# each path is a tuple that contains:
+# (path within learn repo, directory name to use inside of apps/)
+LEARN_PROJECT_PATHS = [
+    ("Metro/Metro_RP2350_Snake/","Metro_RP2350_Snake"),
+    ("Metro/Metro_RP2350_Memory/memory_game/", "Metro_RP2350_Memory"),
+    ("Metro/Metro_RP2350_CircuitPython_Matrix/", "Metro_RP2350_CircuitPython_Matrix"),
+    ("Metro/Metro_RP2350_FlappyNyanCat/", "Metro_RP2350_FlappyNyanCat"),
+    ("Metro/Metro_RP2350_Match3/match3_game/", "Metro_RP2350_Match3"),
+    ("Metro/Metro_RP2350_Breakout/", "Metro_RP2350_Breakout"),
+    ("Metro/Metro_RP2350_Chips_Challenge/", "Metro_RP2350_Chips_Challenge"),
+    ("Metro/Metro_RP2350_Minesweeper/", "Metro_RP2350_Minesweeper"),
+    ("Fruit_Jam/Larsio_Paint_Music/", "Larsio_Paint_Music"),
+    ("Fruit_Jam/Fruit_Jam_IRC_Client/", "Fruit_Jam_IRC_Client"),
 ]
 
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
@@ -39,6 +37,8 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
     try:
         # Copy src contents
         shutil.copytree(src_dir, temp_dir, dirs_exist_ok=True)
+        # remove empty __init__.py file
+        os.remove(temp_dir / "__init__.py")
         
         # Create fonts directory and copy the specific font
         fonts_dir = temp_dir / "fonts"
@@ -48,65 +48,9 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
         # Extract learn-projects contents into apps directory
         apps_dir = temp_dir / "apps"
         apps_dir.mkdir(parents=True, exist_ok=True)
-        for zip_path in learn_projects_dir.glob("*.zip"):
-            # Create app-specific directory using zip name without extension
-            app_name = zip_path.stem
-            app_dir = apps_dir / app_name
-            app_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Extract zip contents and process them
-            with zipfile.ZipFile(zip_path, 'r') as zf:
-                # Find the directory containing code.py
-                code_dir = None
-                for path in zf.namelist():
-                    if path.endswith('/code.py'):
-                        code_dir = str(Path(path).parent) + '/'
-                        break
-                
-                if not code_dir:
-                    print(f"Warning: No code.py found in {zip_path}")
-                    continue
-                
-                # Extract files from the code.py directory to app directory
-                for path in zf.namelist():
-                    if path.startswith(code_dir):
-                        # Skip the lib directory as we'll handle it separately
-                        if 'lib/' in path:
-                            continue
-                        if path.endswith("/"):
-                            # skip directories, they will get created by
-                            # mkdir(parents=True) below
-                            continue
-                        
-                        # Get the relative path from code_dir
-                        rel_path = path[len(code_dir):]
-                        if rel_path:
-                            # Extract the file
-                            source = zf.open(path)
-                            target = app_dir / rel_path
-                            target.parent.mkdir(parents=True, exist_ok=True)
-                            with open(target, 'wb') as f:
-                                f.write(source.read())
-                
-                # Handle lib directory specially - move to root
-                for path in zf.namelist():
-                    if '/lib/' in path:
-                        # Get the part of the path after 'lib/'
-                        lib_index = path.index('/lib/') + 5  # skip past '/lib/'
-                        rel_path = path[lib_index:]
-                        
-                        # Skip directory entries
-                        if not rel_path or path.endswith('/'):
-                            continue
-                            
-                        # Extract the file to root lib directory
-                        source = zf.open(path)
-                        target = temp_dir / 'lib' / rel_path
-                        # Ensure parent directory exists
-                        target.parent.mkdir(parents=True, exist_ok=True)
-                        # Write the file
-                        with open(target, 'wb') as f:
-                            f.write(source.read())
+        # copy learn apps
+        for learn_app_path, dir_name in LEARN_PROJECT_PATHS:
+            shutil.copytree(f"Adafruit_Learning_System_Guides/{learn_app_path}", apps_dir / dir_name, dirs_exist_ok=True)
 
         # copy builtin apps
         shutil.copytree("builtin_apps", apps_dir, dirs_exist_ok=True)
@@ -116,9 +60,9 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
         circup_cli(["--path", temp_dir, "install", "--auto"],
                    standalone_mode=False)
 
-        # install builtin apps required libs
-        for builtin_app_dir in os.listdir("builtin_apps"):
-            circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"apps/{builtin_app_dir}/code.py"],
+        # install apps required libs
+        for app_dir in os.listdir(apps_dir):
+            circup_cli(["--path", temp_dir, "install", "--auto", "--auto-file", f"apps/{app_dir}/code.py"],
                        standalone_mode=False)
         os.remove(temp_dir / "boot_out.txt")
         # Create the final zip file
@@ -139,13 +83,12 @@ def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir:
 
 
 def download_learn_projects():
-    for url in LEARN_PROJECT_URLS:
-        response = requests.get(url.format(int(time.time())), allow_redirects=True)
-        resp_url = response.url
-        #print(resp_url)
-        filename = resp_url.split("/")[-1].split("?")[0]
-        with open(f"learn-projects/{filename}", 'wb') as f:
-            f.write(response.content)
+    try:
+        shutil.rmtree("Adafruit_Learning_System_Guides/")
+    except FileNotFoundError:
+        pass
+
+    os.system("git clone https://github.com/adafruit/Adafruit_Learning_System_Guides.git")
 
 
 def main():
