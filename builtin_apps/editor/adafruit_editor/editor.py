@@ -354,19 +354,25 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                         find_command = False
 
                     elif goto_command:
-                        cursor.row = clamp(int(user_response) - 1, 0, len(buffer) - 1)
-                        window.row = clamp(cursor.row - window.n_rows // 2, 0, len(buffer) - window.n_rows)
-                        cursor.col = 0
-                        window.horizontal_scroll(cursor)
+                        if user_response.isdigit():
+                            cursor.row = clamp(int(user_response) - 1, 0, len(buffer) - 1)
+                            window.row = clamp(cursor.row - window.n_rows // 2, 0, len(buffer) - window.n_rows)
+                            cursor.col = 0
+                            window.horizontal_scroll(cursor)
 
                         user_response = ""
                         goto_command = False
 
-                elif k == "\x7f":  # backspace
+                elif k == "\x7f" or k == "\x08":  # backspace
                     user_response = user_response[:-1]
                 elif k == "\x1b":  # escape
                     user_prompt = None
                     user_response = ""
+                else:
+                    print(f"unhandled k: {k}")
+                    print(f"unhandled K: {ord(k)}")
+                    print(f"unhandled k: {bytes(k, 'utf-8')}")
+
             elif len(k) == 1 and " " <= k <= "~":
                 buffer.insert(cursor, k)
                 for _ in k:
@@ -442,7 +448,6 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
             elif k == "KEY_LEFT":
                 left(window, buffer, cursor)
             elif k == "KEY_DOWN":
-
                 cursor.down(buffer)
                 window.down(buffer, cursor)
                 window.horizontal_scroll(cursor)
