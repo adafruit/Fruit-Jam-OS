@@ -340,12 +340,9 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                                     if line.find(user_response) != -1:
                                         found = True
                                         user_message = f"Found '{user_response}' in line {r + cursor.row + 2}"
-                                        #cursor.row = r + cursor.row + 1
+                                        cursor.row = clamp(r + cursor.row + 1, 0, len(buffer) - 1)
+                                        window.row = clamp(cursor.row - window.n_rows // 2, 0, len(buffer) - window.n_rows)
                                         cursor.col = line.find(user_response) - 1
-                                        for _ in range(r + 1):
-                                            cursor.down(buffer)
-                                            window.down(buffer, cursor)
-                                            window.horizontal_scroll(cursor)
                                         right(window, buffer, cursor)
                                         break
 
