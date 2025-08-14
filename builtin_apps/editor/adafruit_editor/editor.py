@@ -300,9 +300,9 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                     not absolute_filepath.startswith("/sd/") and
                     util.readonly()):
 
-                line = f"{absolute_filepath:12} (mnt RO ^W) | ^R Run | ^O Open | ^F Find | ^G GoTo|^C quit {gc_mem_free_hint()}"
+                line = f"{absolute_filepath:12} (mnt RO ^W) | ^R Run | ^O Open | ^F Find | ^G GoTo | ^C quit {gc_mem_free_hint()}"
             else:
-                line = f"{absolute_filepath:12} (mnt RW ^W) | ^R Run | ^O Open | ^F Find | ^G GoTo | ^S Save|^X save & eXit | ^C quit {gc_mem_free_hint()}"
+                line = f"{absolute_filepath:12} (mnt RW ^W) | ^R Run | ^O Open | ^F Find | ^G GoTo | ^S Save | ^X save & eXit | ^C quit {gc_mem_free_hint()}"
             line = line + " " * (window.n_cols - len(line))
             line = line[:window.n_cols-len(f'{cursor.row+1},{cursor.col+1}')] + f"{cursor.row+1},{cursor.col+1}"
 
