@@ -87,7 +87,7 @@ def PyDOS():
     global envVars
     if "envVars" not in globals().keys():
         envVars = {}
-    _VER = "1.54-fruitjam"
+    _VER = "1.55-fruitjam"
     prmpVals = ['>','(',')','&','|','\x1b','\b','<','=',' ',_VER,'\n','$','']
 
     print("Starting Py-DOS... Type 'help' for help.")
@@ -222,12 +222,24 @@ def PyDOS():
                 err.__traceback__ if hasattr(err,'__traceback__') else None)
             envVars['lasterror'] = format_exception(err,err, \
                 err.__traceback__ if hasattr(err,'__traceback__') else None)
-            if supervisor.runtime.display.root_group != displayio.CIRCUITPYTHON_TERMINAL:
-                supervisor.runtime.display.root_group = displayio.CIRCUITPYTHON_TERMINAL
         except KeyboardInterrupt:
             print("^C")
-            if supervisor.runtime.display.root_group != displayio.CIRCUITPYTHON_TERMINAL:
-                supervisor.runtime.display.root_group = displayio.CIRCUITPYTHON_TERMINAL
+
+        if imp == "C":
+            if "_display" not in envVars.keys():
+                if "display" in dir(Pydos_ui):
+                    envVars["_display"] = Pydos_ui.display
+                elif "display" in dir(supervisor.runtime):
+                    envVars["_display"] = supervisor.runtime.display
+                elif "display" in dir(board):
+                    envVars["_display"] = board.display
+
+            # If _displayTerm is set to "N", do not restore terminal to display
+            if "_display" in envVars.keys() and envVars["_display"] is not None \
+                and envVars.get("_displayTerm","Y")[0].upper() != "N":
+
+                if envVars["_display"].root_group != displayio.CIRCUITPYTHON_TERMINAL:
+                    envVars["_display"].root_group = displayio.CIRCUITPYTHON_TERMINAL
 
         return
 

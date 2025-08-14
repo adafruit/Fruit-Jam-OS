@@ -252,6 +252,11 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
 
     user_message = None
     user_message_shown_time = -1
+    user_prompt = None
+    user_response = ""
+    last_find = ""
+    find_command = False
+    goto_command = False
 
     clicked_tile_coords = [None, None]
 
@@ -290,18 +295,21 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
             setline(row, "~~ EOF ~~")
         row = curses.LINES - 1
 
-        if user_message is None:
+        if user_message is None and user_prompt is None:
             if (not absolute_filepath.startswith("/saves/") and
                     not absolute_filepath.startswith("/sd/") and
                     util.readonly()):
 
-                line = f"{absolute_filepath:12} (mnt RO ^W) | ^R run | ^O Open | ^C: quit{gc_mem_free_hint()}"
+                line = f"{cursor.row+1},{cursor.col+1} {absolute_filepath:12} (mnt RO ^W)|^R Run|^O Open|^F Find|^G GoTo|^C quit{gc_mem_free_hint()}"
             else:
-                line = f"{absolute_filepath:12} (mnt RW ^W) | ^R run | ^O Open  | ^S save | ^X: save & exit | ^C: exit no save{gc_mem_free_hint()}"
-        else:
+                line = f"{cursor.row+1},{cursor.col+1} {absolute_filepath:12} (mnt RW ^W)|^R Run|^O Open|^F Find|^G GoTo|^S Save|^X save & eXit|^C quit{gc_mem_free_hint()}"
+
+        elif user_message is not None:
             line = user_message
             if user_message_shown_time + 3.0 < time.monotonic():
                 user_message = None
+        elif user_prompt is not None:
+            line = f'{user_prompt} {user_response}'
         setline(row, line)
 
         stdscr.move(*window.translate(cursor))
@@ -310,7 +318,59 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
         k = stdscr.getkey()
         if k is not None:
             # print(repr(k))
-            if len(k) == 1 and " " <= k <= "~":
+            if user_prompt is not None:
+                if len(k) == 1 and " " <= k <= "~":
+                    user_response += k
+                elif k == "\n":
+                    user_prompt = None
+
+                    if find_command:
+                        found = False
+                        if user_response == "":
+                            user_response = last_find
+                        if user_response:
+                            last_find = user_response
+                            if buffer[cursor.row][min(cursor.col+1,len(buffer[cursor.row])-1):].find(user_response) != -1:
+                                found = True
+                                user_message = f"Found '{user_response}' in line {cursor.row+1}"
+                                cursor.col += buffer[cursor.row][cursor.col:].find(user_response) - 1
+                                right(window, buffer, cursor)
+                            else:
+                                for r, line in enumerate(buffer[cursor.row+1:]):
+                                    if line.find(user_response) != -1:
+                                        found = True
+                                        user_message = f"Found '{user_response}' in line {r + cursor.row + 2}"
+                                        #cursor.row = r + cursor.row + 1
+                                        cursor.col = line.find(user_response) - 1
+                                        for _ in range(r + 1):
+                                            cursor.down(buffer)
+                                            window.down(buffer, cursor)
+                                            window.horizontal_scroll(cursor)
+                                        right(window, buffer, cursor)
+                                        break
+
+                        if not found:
+                            user_message = f"'{user_response}' not found"
+                        user_message_shown_time = time.monotonic()
+
+                        user_response = ""
+                        find_command = False
+
+                    elif goto_command:
+                        cursor.row = clamp(int(user_response) - 1, 0, len(buffer) - 1)
+                        window.row = clamp(cursor.row - window.n_rows // 2, 0, len(buffer) - window.n_rows)
+                        cursor.col = 0
+                        window.horizontal_scroll(cursor)
+
+                        user_response = ""
+                        goto_command = False
+
+                elif k == "\x7f":  # backspace
+                    user_response = user_response[:-1]
+                elif k == "\x1b":  # escape
+                    user_prompt = None
+                    user_response = ""
+            elif len(k) == 1 and " " <= k <= "~":
                 buffer.insert(cursor, k)
                 for _ in k:
                     right(window, buffer, cursor)
@@ -368,7 +428,15 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                 supervisor.set_next_code_file("/apps/editor/code.py", sticky_on_reload=False, reload_on_error=True,
                                               working_directory="/apps/editor")
                 supervisor.reload()
-
+            elif k == "\x06":  # Ctrl-F
+                find_command = True
+                if last_find == "":
+                    user_prompt = "Find:"
+                else:
+                    user_prompt = f"Find: [{last_find}]"
+            elif k == "\x07":  # Ctrl-G
+                goto_command = True
+                user_prompt = "Goto line:"
 
             elif k == "KEY_HOME":
                 home(window, buffer, cursor)
@@ -438,19 +506,18 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                 clicked_tile_coords[0] = mouse.x // 6
                 clicked_tile_coords[1] = mouse.y // 12
 
-                if clicked_tile_coords[0] > len(buffer.lines[clicked_tile_coords[1]]):
-                    clicked_tile_coords[0] = len(buffer.lines[clicked_tile_coords[1]])
-                cursor.row = clicked_tile_coords[1]
-                cursor.col = clicked_tile_coords[0]
-
+                if clicked_tile_coords[0] > len(buffer.lines[clicked_tile_coords[1]+window.row]):
+                    clicked_tile_coords[0] = len(buffer.lines[clicked_tile_coords[1]+window.row])
+                cursor.row = clicked_tile_coords[1] + window.row
+                cursor.col = clicked_tile_coords[0] + window.col
 
         # print("updating visible cursor")
         # print(f"anchored pos: {((cursor.col * 6) - 1, (cursor.row * 12) + 20)}")
 
         if (old_cursor_pos[0] - old_window_pos[0] != cursor.col - window.col or
                 old_cursor_pos[1] - old_window_pos[1] != cursor.row - window.row):
-            #print(f"old cursor: {old_cursor_pos}, new: {(cursor.col, cursor.row)}")
-            #print(f"window: {window.row}, {window.col}")
+            # print(f"old cursor: {old_cursor_pos}, new: {(cursor.col, cursor.row)}")
+            # print(f"window (row,col): {window.row}, {window.col}")
             terminal_tilegrid.pixel_shader[old_cursor_pos[0] - old_window_pos[0], old_cursor_pos[1] - old_window_pos[1]] = [0,1]
             terminal_tilegrid.pixel_shader[cursor.col - window.col, cursor.row - window.row] = [1,0]
             # print(f"old: {terminal_tilegrid.pixel_shader[old_cursor_pos[0], old_cursor_pos[1]]} new: {terminal_tilegrid.pixel_shader[cursor.col, cursor.row]}")
