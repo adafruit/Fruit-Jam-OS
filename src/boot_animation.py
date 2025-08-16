@@ -46,17 +46,14 @@ if ltv320_present:
         if launcher_config["ltv320"].get("output") == "speaker":
             # use speaker
             dac.speaker_output = True
-            dac.speaker_volume = 0
             dac.dac_volume = launcher_config["ltv320"].get("volume",5)  # dB
         else:
             # use headphones
             dac.headphone_output = True
-            dac.headphone_volume = 0
             dac.dac_volume = launcher_config["ltv320"].get("volume",-15)  # dB
     else:
         # default to headphones
         dac.headphone_output = True
-        dac.headphone_volume = 0
         dac.dac_volume = -15  # dB
 
     wave_file = open("/boot_animation/ada_fruitjam_boot_jingle.wav", "rb")
