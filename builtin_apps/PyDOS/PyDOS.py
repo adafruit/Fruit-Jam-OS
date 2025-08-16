@@ -35,10 +35,7 @@ if implementation.name.upper() == "MICROPYTHON":
     readonly = False
     imp = "M"
 elif implementation.name.upper() == "CIRCUITPYTHON":
-    if not Pydos_ui:
-        from supervisor import runtime
-
-    from supervisor import reload
+    from supervisor import runtime, reload
     import storage
     import microcontroller
     import displayio
@@ -87,7 +84,7 @@ def PyDOS():
     global envVars
     if "envVars" not in globals().keys():
         envVars = {}
-    _VER = "1.55-fruitjam"
+    _VER = "1.56-fruitjam"
     prmpVals = ['>','(',')','&','|','\x1b','\b','<','=',' ',_VER,'\n','$','']
 
     print("Starting Py-DOS... Type 'help' for help.")
@@ -229,8 +226,8 @@ def PyDOS():
             if "_display" not in envVars.keys():
                 if "display" in dir(Pydos_ui):
                     envVars["_display"] = Pydos_ui.display
-                elif "display" in dir(supervisor.runtime):
-                    envVars["_display"] = supervisor.runtime.display
+                elif "display" in dir(runtime):
+                    envVars["_display"] = runtime.display
                 elif "display" in dir(board):
                     envVars["_display"] = board.display
 
