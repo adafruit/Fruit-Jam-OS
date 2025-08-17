@@ -31,26 +31,26 @@ i2c = board.I2C()
 while not i2c.try_lock():
     time.sleep(0.01)
 if 0x18 in i2c.scan():
-    ltv320_present = True
+    tlv320_present = True
 else:
-    ltv320_present = False
+    tlv320_present = False
 i2c.unlock()
 
-if ltv320_present:
+if tlv320_present:
     dac = adafruit_tlv320.TLV320DAC3100(i2c)
 
     # set sample rate & bit depth
     dac.configure_clocks(sample_rate=11030, bit_depth=16)
 
-    if "ltv320" in launcher_config:
-        if launcher_config["ltv320"].get("output") == "speaker":
+    if "tlv320" in launcher_config:
+        if launcher_config["tlv320"].get("output") == "speaker":
             # use speaker
             dac.speaker_output = True
-            dac.dac_volume = launcher_config["ltv320"].get("volume",5)  # dB
+            dac.dac_volume = launcher_config["tlv320"].get("volume",5)  # dB
         else:
             # use headphones
             dac.headphone_output = True
-            dac.dac_volume = launcher_config["ltv320"].get("volume",-15)  # dB
+            dac.dac_volume = launcher_config["tlv320"].get("volume",-15)  # dB
     else:
         # default to headphones
         dac.headphone_output = True
@@ -648,7 +648,7 @@ display.root_group = main_group
 
 start_time = time.monotonic()
 
-if ltv320_present:
+if tlv320_present:
     audio.play(wave)
 
 while True:
@@ -696,7 +696,7 @@ while True:
     if not still_going:
         break
 
-if ltv320_present:
+if tlv320_present:
     while audio.playing:
         pass
 
