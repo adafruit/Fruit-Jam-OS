@@ -237,6 +237,10 @@ def PyDOS():
 
                 if envVars["_display"].root_group != displayio.CIRCUITPYTHON_TERMINAL:
                     envVars["_display"].root_group = displayio.CIRCUITPYTHON_TERMINAL
+            
+                envVars["_display"].auto_refresh = True
+                envVars["_scrHeight"] = envVars["_display"].root_group[0].height
+                envVars["_scrWidth"] = envVars["_display"].root_group[0].width - 1
 
         return
 
