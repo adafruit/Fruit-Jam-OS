@@ -146,45 +146,13 @@ if "use_mouse" in launcher_config and launcher_config["use_mouse"]:
 
     mouse_buf = array.array("b", [0] * 8)
 
-WIDTH = int(280 / 360 * display.width // scale)
+WIDTH = int(298 / 360 * display.width // scale)
 HEIGHT = int(182 / 200 * display.height // scale)
 
 config = {
     "menu_title": "Launcher Menu",
     "width": 3,
     "height": 2,
-    "apps": [
-        {
-            "title": "🐍Snake🐍",
-            "icon": "icon_snake.bmp",
-            "file": "code_snake_game.py"
-        },
-        {
-            "title": "Nyan😺Flap",
-            "icon": "icon_flappynyan.bmp",
-            "file": "code_flappy_nyan.py"
-        },
-        {
-            "title": "Memory🧠",
-            "icon": "icon_memory.bmp",
-            "file": "code_memory.py"
-        },
-        {
-            "title": "Matrix",
-            "icon": "/apps/matrix/icon.bmp",
-            "file": "/apps/matrix/code.py"
-        },
-        {
-            "title": "Breakout",
-            "icon": "icon_breakout.bmp",
-            "file": "code_breakout.py"
-        },
-        {
-            "title": "Paint🖌️",
-            "icon": "icon_paint.bmp",
-        }
-
-    ]
 }
 
 cell_width = WIDTH // config["width"]
@@ -371,11 +339,11 @@ if "arrow" in launcher_config["palette"]:
 
 left_tg = AnchoredTileGrid(bitmap=left_bmp, pixel_shader=left_palette)
 left_tg.anchor_point = (0, 0.5)
-left_tg.anchored_position = (4, (display.height // 2 // scale) - 2)
+left_tg.anchored_position = (0, (display.height // 2 // scale) - 2)
 
 right_tg = AnchoredTileGrid(bitmap=right_bmp, pixel_shader=right_palette)
 right_tg.anchor_point = (1.0, 0.5)
-right_tg.anchored_position = ((display.width // scale) - 4, (display.height // 2 // scale) - 2)
+right_tg.anchored_position = ((display.width // scale), (display.height // 2 // scale) - 2)
 original_arrow_btn_color = left_palette[2]
 
 scaled_group.append(left_tg)
@@ -389,13 +357,11 @@ if mouse:
     scaled_group.append(mouse_tg)
 
 
-help_txt = Label(terminalio.FONT, text="[Arrow]: Move\n[E]:     Edit\n[Enter]:  Run\n[1-9]:   Page",
+help_txt = Label(terminalio.FONT, text="[Arrow]: Move [E]: Edit [Enter]: Run [1-9]: Page",
                  color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
-# help_txt = TextBox(terminalio.FONT, width=88, height=30, align=TextBox.ALIGN_RIGHT, background_color=int(launcher_config["palette"].get("accent", "0x008800"), 16), text="[E]: Edit\n[Enter]:  Run")
-help_txt.anchor_point = (0, 0)
 
-help_txt.anchored_position = (2, 2)
-# help_txt.anchored_position = (display.width - 89, 1)
+help_txt.anchor_point = (0.0, 1.0)
+help_txt.anchored_position = (2, display.height-2)
 
 print(help_txt.bounding_box)
 main_group.append(help_txt)
