@@ -19,6 +19,7 @@ LEARN_PROJECT_PATHS = [
     ("Metro/Metro_RP2350_Minesweeper/", "Metro_RP2350_Minesweeper"),
     ("Fruit_Jam/Larsio_Paint_Music/", "Larsio_Paint_Music"),
     ("Fruit_Jam/Fruit_Jam_IRC_Client/", "Fruit_Jam_IRC_Client"),
+    ("Fruit_Jam/Fruit_Jam_PyPaint/", "Fruit_Jam_PyPaint"),
 ]
 
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
