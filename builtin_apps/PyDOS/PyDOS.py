@@ -226,7 +226,7 @@ def PyDOS():
             if "_display" not in envVars.keys():
                 if "display" in dir(Pydos_ui):
                     envVars["_display"] = Pydos_ui.display
-                elif "display" in dir(runtime):
+                elif "display" in dir(runtime) and runtime.display is not None:
                     envVars["_display"] = runtime.display
                 elif "display" in dir(board):
                     envVars["_display"] = board.display
@@ -237,6 +237,10 @@ def PyDOS():
 
                 if envVars["_display"].root_group != displayio.CIRCUITPYTHON_TERMINAL:
                     envVars["_display"].root_group = displayio.CIRCUITPYTHON_TERMINAL
+            
+                envVars["_display"].auto_refresh = True
+                envVars["_scrHeight"] = envVars["_display"].root_group[0].height
+                envVars["_scrWidth"] = envVars["_display"].root_group[0].width - 1
 
         return
 
