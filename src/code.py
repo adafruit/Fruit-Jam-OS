@@ -175,7 +175,6 @@ scaled_group.append(menu_title_txt)
 app_titles = []
 apps = []
 app_path = pathlib.Path("/apps")
-i = 0
 
 pages = [{}]
 
@@ -216,7 +215,7 @@ for path in app_path.iterdir():
         "dir": path
     })
 
-    i += 1
+apps = sorted(apps, key=lambda app: app["title"].lower())
 
 print("launcher config", launcher_config)
 if "favorites" in launcher_config:
