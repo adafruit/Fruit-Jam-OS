@@ -231,8 +231,9 @@ if "favorites" in launcher_config:
     for favorite_app in reversed(launcher_config["favorites"]):
         print("checking favorite", favorite_app)
         for app in apps:
-            print(f"checking app: {app["dir"]}")
-            if app["dir"] == f"/apps/{favorite_app}":
+            app_name = str(app["dir"].absolute()).split("/")[-1]
+            print(f"checking app: {app_name}")
+            if app_name == favorite_app:
                 apps.remove(app)
                 apps.insert(0, app)
 
