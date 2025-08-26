@@ -3,6 +3,7 @@
 
 import supervisor
 from adafruit_argv_file import read_argv, write_argv
+import adafruit_pathlib as pathlib
 import storage
 
 supervisor.runtime.autoreload = False
@@ -44,4 +45,7 @@ else:
     if supervisor.runtime.display is None:
         supervisor.set_next_code_file("code.py")
     else:
-        supervisor.set_next_code_file("boot_animation.py")
+        for next_code_file in ("/sd/boot_animation.py", "boot_animation.py"):
+            if pathlib.Path(next_code_file).exists():
+                supervisor.set_next_code_file("boot_animation.py")
+                break
