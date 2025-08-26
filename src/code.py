@@ -69,9 +69,10 @@ if display.width > 360:
     scale = 2
 
 launcher_config = {}
-if pathlib.Path("launcher.conf.json").exists():
-    with open("launcher.conf.json", "r") as f:
-        launcher_config = json.load(f)
+for launcher_config_path in ("launcher.conf.json", "/sd/launcher.conf.json"):
+    if pathlib.Path(launcher_config_path).exists():
+        with open(launcher_config_path, "r") as f:
+            launcher_config = launcher_config | json.load(f)
 if "palette" not in launcher_config:
     launcher_config["palette"] = {}
 
