@@ -175,46 +175,53 @@ scaled_group.append(menu_title_txt)
 
 app_titles = []
 apps = []
-app_path = pathlib.Path("/apps")
+app_paths = (
+    pathlib.Path("/apps"),
+    pathlib.Path("/sd/apps")
+)
 
 pages = [{}]
 
 cur_file_index = 0
 
-for path in app_path.iterdir():
-    print(path)
-
-    code_file = path / "code.py"
-    if not code_file.exists():
+for app_path in app_paths:
+    if not app_path.exists():
         continue
+    
+    for path in app_path.iterdir():
+        print(path)
 
-    metadata_file = path / "metadata.json"
-    if not metadata_file.exists():
-        metadata_file = None
-        metadata = None
-    if metadata_file is not None:
-        with open(metadata_file.absolute(), "r") as f:
-            metadata = json.load(f)
+        code_file = path / "code.py"
+        if not code_file.exists():
+            continue
 
-    if metadata is not None and "icon" in metadata:
-        icon_file = path / metadata["icon"]
-    else:
-        icon_file = path / "icon.bmp"
+        metadata_file = path / "metadata.json"
+        if not metadata_file.exists():
+            metadata_file = None
+            metadata = None
+        if metadata_file is not None:
+            with open(metadata_file.absolute(), "r") as f:
+                metadata = json.load(f)
 
-    if not icon_file.exists():
-        icon_file = None
+        if metadata is not None and "icon" in metadata:
+            icon_file = path / metadata["icon"]
+        else:
+            icon_file = path / "icon.bmp"
 
-    if metadata is not None and "title" in metadata:
-        title = metadata["title"]
-    else:
-        title = path.name
+        if not icon_file.exists():
+            icon_file = None
 
-    apps.append({
-        "title": title,
-        "icon": str(icon_file.absolute()) if icon_file is not None else None,
-        "file": str(code_file.absolute()),
-        "dir": path
-    })
+        if metadata is not None and "title" in metadata:
+            title = metadata["title"]
+        else:
+            title = path.name
+
+        apps.append({
+            "title": title,
+            "icon": str(icon_file.absolute()) if icon_file is not None else None,
+            "file": str(code_file.absolute()),
+            "dir": path
+        })
 
 apps = sorted(apps, key=lambda app: app["title"].lower())
 
