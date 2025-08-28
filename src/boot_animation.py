@@ -41,7 +41,7 @@ if tlv320_present:
             # use speaker
             fjPeriphs.audio_output = "speaker"
 
-    wave_file "/boot_animation/ada_fruitjam_boot_jingle.wav", "rb"
+    wave_file = "/boot_animation/ada_fruitjam_boot_jingle.wav"
 
 
 class OvershootAnimator:
