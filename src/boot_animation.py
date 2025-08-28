@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Tim Cocks for Adafruit Industries
 #
 # SPDX-License-Identifier: MIT
-import gc
 import json
 
 import board
@@ -10,10 +9,8 @@ from displayio import TileGrid, Group
 import adafruit_imageload
 import time
 import math
-import adafruit_tlv320
-from audiocore import WaveFile
-import audiobusio
 import adafruit_pathlib as pathlib
+import adafruit_fruitjam
 
 launcher_config = {}
 if pathlib.Path("launcher.conf.json").exists():
@@ -37,28 +34,14 @@ else:
 i2c.unlock()
 
 if tlv320_present:
-    dac = adafruit_tlv320.TLV320DAC3100(i2c)
-
-    # set sample rate & bit depth
-    dac.configure_clocks(sample_rate=11030, bit_depth=16)
+    fjPeriphs = adafruit_fruitjam.peripherals.Peripherals()
 
     if "tlv320" in launcher_config:
         if launcher_config["tlv320"].get("output") == "speaker":
             # use speaker
-            dac.speaker_output = True
-            dac.dac_volume = launcher_config["tlv320"].get("volume",5)  # dB
-        else:
-            # use headphones
-            dac.headphone_output = True
-            dac.dac_volume = launcher_config["tlv320"].get("volume",-15)  # dB
-    else:
-        # default to headphones
-        dac.headphone_output = True
-        dac.dac_volume = -15  # dB
+            fjPeriphs.audio_output = "speaker"
 
-    wave_file = open("/boot_animation/ada_fruitjam_boot_jingle.wav", "rb")
-    wave = WaveFile(wave_file)
-    audio = audiobusio.I2SOut(board.I2S_BCLK, board.I2S_WS, board.I2S_DIN)
+    wave_file "/boot_animation/ada_fruitjam_boot_jingle.wav", "rb"
 
 
 class OvershootAnimator:
@@ -649,7 +632,7 @@ display.root_group = main_group
 start_time = time.monotonic()
 
 if tlv320_present:
-    audio.play(wave)
+    fjPeriphs.play_file(wave_file,False)
 
 while True:
     now = time.monotonic()
@@ -697,7 +680,7 @@ while True:
         break
 
 if tlv320_present:
-    while audio.playing:
+    while fjPeriphs.audio.playing:
         pass
 
 supervisor.set_next_code_file("code.py")
