@@ -40,6 +40,8 @@ if tlv320_present:
         if launcher_config["tlv320"].get("output") == "speaker":
             # use speaker
             fjPeriphs.audio_output = "speaker"
+        if "volume" in launcher_config["tlv320"]:
+            fjPeriphs.volume = launcher_config["tlv320"]["volume"]
 
     wave_file = "/boot_animation/ada_fruitjam_boot_jingle.wav"
 
