@@ -9,7 +9,6 @@ import os
 
 import microcontroller
 import supervisor
-import usb_cdc
 from . import dang as curses
 from . import util
 from adafruit_pathlib import Path
@@ -17,10 +16,6 @@ import time
 import json
 from adafruit_argv_file import argv_filename
 
-# pylint: disable=redefined-builtin
-
-# def print(message):
-#     usb_cdc.data.write(f"{message}\r\n".encode("utf-8"))
 
 INPUT_DISPLAY_REFRESH_COOLDOWN = 0.3  # s
 SHOW_MEMFREE = False
