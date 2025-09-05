@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 import json
 import adafruit_pathlib as pathlib
-from adafruit_simplemath import map_range
 
 class LauncherConfig:
 
