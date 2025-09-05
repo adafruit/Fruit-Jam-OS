@@ -98,10 +98,6 @@ class LauncherConfig:
         self._data["audio"]["volume"] = min(max(value, 1), 20)
 
     @property
-    def audio_volume_db(self) -> int:
-        return map_range(self.audio_volume, 1, 20, -63, 23)
-
-    @property
     def boot_animation(self) -> str:
         value = self._data["boot_animation"] if "boot_animation" in self._data else ""
         if not value.endswith(".py") or not pathlib.Path(value).exists():
