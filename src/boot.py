@@ -45,7 +45,7 @@ else:
     if supervisor.runtime.display is None:
         supervisor.set_next_code_file("code.py")
     else:
-        for next_code_file in ("/sd/boot_animation.py", "boot_animation.py"):
-            if pathlib.Path(next_code_file).exists():
-                supervisor.set_next_code_file("boot_animation.py")
-                break
+        from launcher_config import LauncherConfig
+        next_code_file = LauncherConfig().boot_animation
+        if pathlib.Path(next_code_file).exists():
+            supervisor.set_next_code_file("boot_animation.py")

@@ -13,13 +13,10 @@ import math
 import adafruit_tlv320
 from audiocore import WaveFile
 import audiobusio
-import adafruit_pathlib as pathlib
 
-launcher_config = {}
-for launcher_config_path in ("launcher.conf.json", "/sd/launcher.conf.json"):
-    if pathlib.Path(launcher_config_path).exists():
-        with open(launcher_config_path, "r") as f:
-            launcher_config = launcher_config | json.load(f)
+from launcher_config import LauncherConfig
+
+launcher_config = LauncherConfig()
 
 BOX_SIZE = (235, 107)
 TARGET_FPS = 70
@@ -43,19 +40,14 @@ if ltv320_present:
     # set sample rate & bit depth
     dac.configure_clocks(sample_rate=11030, bit_depth=16)
 
-    if "sound" in launcher_config:
-        if launcher_config["sound"] == "speaker":
-            # use speaker
-            dac.speaker_output = True
-            dac.speaker_volume = -40
-        else:
-            # use headphones
-            dac.headphone_output = True
-            dac.headphone_volume = -15  # dB
+    # set output destination
+    if launcher_config.audio_output_speaker:
+        dac.speaker_output = True
     else:
-        # default to headphones
         dac.headphone_output = True
-        dac.headphone_volume = -15  # dB
+
+    # set volume
+    dac.dac_volume = launcher_config.audio_volume_db
 
     wave_file = open("/boot_animation/ada_fruitjam_boot_jingle.wav", "rb")
     wave = WaveFile(wave_file)
