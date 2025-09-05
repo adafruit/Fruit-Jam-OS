@@ -43,7 +43,7 @@ if tlv320_present:
         if "volume" in launcher_config["audio"]:
             fjPeriphs.volume = launcher_config["audio"]["volume"]
 
-    wave_file = "/boot_animation/ada_fruitjam_boot_jingle.wav"
+    wave_file = "/boot_animation_assets/ada_fruitjam_boot_jingle.wav"
 
 
 class OvershootAnimator:
@@ -233,17 +233,17 @@ class OvershootAnimator:
         self.pos_animating = False
 
 
-apple_sprites, apple_sprites_palette = adafruit_imageload.load("/boot_animation/apple_spritesheet.bmp")
-f_sprites, f_sprites_palette = adafruit_imageload.load("/boot_animation/f_spritesheet.bmp")
-r_sprites, r_sprites_palette = adafruit_imageload.load("/boot_animation/r_spritesheet.bmp")
-u_sprites, u_sprites_palette = adafruit_imageload.load("/boot_animation/u_spritesheet.bmp")
-i_sprites, i_sprites_palette = adafruit_imageload.load("/boot_animation/i_spritesheet.bmp")
-t_sprites, t_sprites_palette = adafruit_imageload.load("/boot_animation/t_spritesheet.bmp")
-j_sprites, j_sprites_palette = adafruit_imageload.load("/boot_animation/j_spritesheet.bmp")
+apple_sprites, apple_sprites_palette = adafruit_imageload.load("/boot_animation_assets/apple_spritesheet.bmp")
+f_sprites, f_sprites_palette = adafruit_imageload.load("/boot_animation_assets/f_spritesheet.bmp")
+r_sprites, r_sprites_palette = adafruit_imageload.load("/boot_animation_assets/r_spritesheet.bmp")
+u_sprites, u_sprites_palette = adafruit_imageload.load("/boot_animation_assets/u_spritesheet.bmp")
+i_sprites, i_sprites_palette = adafruit_imageload.load("/boot_animation_assets/i_spritesheet.bmp")
+t_sprites, t_sprites_palette = adafruit_imageload.load("/boot_animation_assets/t_spritesheet.bmp")
+j_sprites, j_sprites_palette = adafruit_imageload.load("/boot_animation_assets/j_spritesheet.bmp")
 j_sprites_palette.make_transparent(0)
-a_sprites, a_sprites_palette = adafruit_imageload.load("/boot_animation/a_spritesheet.bmp")
+a_sprites, a_sprites_palette = adafruit_imageload.load("/boot_animation_assets/a_spritesheet.bmp")
 a_sprites_palette.make_transparent(0)
-m_sprites, m_sprites_palette = adafruit_imageload.load("/boot_animation/m_spritesheet.bmp")
+m_sprites, m_sprites_palette = adafruit_imageload.load("/boot_animation_assets/m_spritesheet.bmp")
 m_sprites_palette.make_transparent(0)
 
 default_sprite_delay = 1 / 35
