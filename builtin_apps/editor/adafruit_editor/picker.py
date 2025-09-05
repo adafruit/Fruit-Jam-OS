@@ -6,14 +6,8 @@
 import os
 import time
 
-import usb_cdc
 from . import dang as curses
 from . import util
-
-# pylint: disable=redefined-builtin
-
-# def print(message):
-#     usb_cdc.data.write(f"{message}\r\n".encode("utf-8"))
 
 
 always = ["code.py", "boot.py", "settings.toml", "boot_out.txt"]
