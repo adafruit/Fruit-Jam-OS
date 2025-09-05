@@ -74,7 +74,7 @@ class LauncherConfig:
     
     @property
     def audio_output(self) -> str:
-        return self._data["audio"].get("output")
+        return self._data["audio"].get("output", "headphone")
     
     @audio_output.setter
     def audio_output(self, value: str) -> None:
