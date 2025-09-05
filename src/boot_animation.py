@@ -9,13 +9,11 @@ from displayio import TileGrid, Group
 import adafruit_imageload
 import time
 import math
-import adafruit_pathlib as pathlib
 import adafruit_fruitjam
 
-launcher_config = {}
-if pathlib.Path("launcher.conf.json").exists():
-    with open("launcher.conf.json", "r") as f:
-        launcher_config = json.load(f)
+from launcher_config import LauncherConfig
+
+launcher_config = LauncherConfig()
 
 BOX_SIZE = (235, 107)
 TARGET_FPS = 70
@@ -36,12 +34,10 @@ i2c.unlock()
 if tlv320_present:
     fjPeriphs = adafruit_fruitjam.peripherals.Peripherals()
 
-    if "audio" in launcher_config:
-        if launcher_config["audio"].get("output") == "speaker":
-            # use speaker
-            fjPeriphs.audio_output = "speaker"
-        if "volume" in launcher_config["audio"]:
-            fjPeriphs.volume = launcher_config["audio"]["volume"]
+    if launcher_config.audio_output_speaker:
+        # use speaker
+        fjPeriphs.audio_output = "speaker"
+    fjPeriphs.volume = launcher_config.audio_volume
 
     wave_file = "/boot_animation_assets/ada_fruitjam_boot_jingle.wav"
 

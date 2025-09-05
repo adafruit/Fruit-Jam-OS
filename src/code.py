@@ -27,6 +27,8 @@ from adafruit_anchored_group import AnchoredGroup
 from adafruit_fruitjam.peripherals import request_display_config, VALID_DISPLAY_SIZES
 from adafruit_argv_file import read_argv, write_argv
 
+from launcher_config import LauncherConfig
+
 """
 desktop launcher code.py arguments
 
@@ -68,12 +70,7 @@ scale = 1
 if display.width > 360:
     scale = 2
 
-launcher_config = {}
-if pathlib.Path("launcher.conf.json").exists():
-    with open("launcher.conf.json", "r") as f:
-        launcher_config = json.load(f)
-if "palette" not in launcher_config:
-    launcher_config["palette"] = {}
+launcher_config = LauncherConfig()
 
 font_file = "/fonts/terminal.lvfontbin"
 font = bitmap_font.load_font(font_file)
@@ -86,7 +83,7 @@ display.root_group = main_group
 
 background_bmp = displayio.Bitmap(display.width, display.height, 1)
 bg_palette = displayio.Palette(1)
-bg_palette[0] = int(launcher_config["palette"].get("bg", "0x222222"), 16)
+bg_palette[0] = launcher_config.palette_bg
 bg_tg = displayio.TileGrid(bitmap=background_bmp, pixel_shader=bg_palette)
 scaled_group.append(bg_tg)
 
@@ -111,7 +108,7 @@ mouse_interface_index, mouse_endpoint_address = None, None
 mouse = None
 mouse_was_attached = None
 
-if "use_mouse" in launcher_config and launcher_config["use_mouse"]:
+if launcher_config.use_mouse:
 
     # scan for connected USB device and loop over any found
     print("scanning usb")
@@ -167,64 +164,72 @@ menu_grid = GridLayout(x=(display.width // scale - WIDTH) // 2,
                        divider_lines=False)
 scaled_group.append(menu_grid)
 
-menu_title_txt = Label(font, text="Fruit Jam OS", color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
+menu_title_txt = Label(font, text="Fruit Jam OS", color=launcher_config.palette_fg)
 menu_title_txt.anchor_point = (0.5, 0.5)
 menu_title_txt.anchored_position = (display.width // (2 * scale), 2)
 scaled_group.append(menu_title_txt)
 
 app_titles = []
 apps = []
-app_path = pathlib.Path("/apps")
+app_paths = (
+    pathlib.Path("/apps"),
+    pathlib.Path("/sd/apps")
+)
 
 pages = [{}]
 
 cur_file_index = 0
 
-for path in app_path.iterdir():
-    print(path)
-
-    code_file = path / "code.py"
-    if not code_file.exists():
+for app_path in app_paths:
+    if not app_path.exists():
         continue
+    
+    for path in app_path.iterdir():
+        print(path)
 
-    metadata_file = path / "metadata.json"
-    if not metadata_file.exists():
-        metadata_file = None
-        metadata = None
-    if metadata_file is not None:
-        with open(metadata_file.absolute(), "r") as f:
-            metadata = json.load(f)
+        code_file = path / "code.py"
+        if not code_file.exists():
+            continue
 
-    if metadata is not None and "icon" in metadata:
-        icon_file = path / metadata["icon"]
-    else:
-        icon_file = path / "icon.bmp"
+        metadata_file = path / "metadata.json"
+        if not metadata_file.exists():
+            metadata_file = None
+            metadata = None
+        if metadata_file is not None:
+            with open(metadata_file.absolute(), "r") as f:
+                metadata = json.load(f)
 
-    if not icon_file.exists():
-        icon_file = None
+        if metadata is not None and "icon" in metadata:
+            icon_file = path / metadata["icon"]
+        else:
+            icon_file = path / "icon.bmp"
 
-    if metadata is not None and "title" in metadata:
-        title = metadata["title"]
-    else:
-        title = path.name
+        if not icon_file.exists():
+            icon_file = None
 
-    apps.append({
-        "title": title,
-        "icon": str(icon_file.absolute()) if icon_file is not None else None,
-        "file": str(code_file.absolute()),
-        "dir": path
-    })
+        if metadata is not None and "title" in metadata:
+            title = metadata["title"]
+        else:
+            title = path.name
+
+        apps.append({
+            "title": title,
+            "icon": str(icon_file.absolute()) if icon_file is not None else None,
+            "file": str(code_file.absolute()),
+            "dir": path
+        })
 
 apps = sorted(apps, key=lambda app: app["title"].lower())
 
 print("launcher config", launcher_config)
-if "favorites" in launcher_config:
+if len(launcher_config.favorites):
 
-    for favorite_app in reversed(launcher_config["favorites"]):
+    for favorite_app in reversed(launcher_config.favorites):
         print("checking favorite", favorite_app)
         for app in apps:
-            print(f"checking app: {app["dir"]}")
-            if app["dir"] == f"/apps/{favorite_app}":
+            app_name = str(app["dir"].absolute()).split("/")[-1]
+            print(f"checking app: {app_name}")
+            if app_name == favorite_app:
                 apps.remove(app)
                 apps.insert(0, app)
 
@@ -250,7 +255,7 @@ def _create_cell_group(app):
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
     title_txt = TextBox(font, text=app["title"], width=cell_width, height=18,
-                        align=TextBox.ALIGN_CENTER, color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
+                        align=TextBox.ALIGN_CENTER, color=launcher_config.palette_fg)
     icon_tg.y = (cell_height - icon_tg.tile_height - title_txt.height) // 2
     cell_group.append(title_txt)
     title_txt.anchor_point = (0, 0)
@@ -272,7 +277,7 @@ def _reuse_cell_group(app, cell_group):
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
     # title_txt = TextBox(font, text=app["title"], width=cell_width, height=18,
-    #                     align=TextBox.ALIGN_CENTER, color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
+    #                     align=TextBox.ALIGN_CENTER, color=launcher_config.palette_fg)
     # cell_group.append(title_txt)
     title_txt = cell_group[1]
     title_txt.text = app["title"]
@@ -321,7 +326,7 @@ def display_page(page_index):
         print(f"{grid_index} | {grid_index % config["width"], grid_index // config["width"]}")
 
 
-page_txt = Label(terminalio.FONT, text="", scale=scale, color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
+page_txt = Label(terminalio.FONT, text="", scale=scale, color=launcher_config.palette_fg)
 page_txt.anchor_point = (1.0, 1.0)
 page_txt.anchored_position = (display.width - 2, display.height - 2)
 main_group.append(page_txt)
@@ -333,8 +338,7 @@ left_bmp, left_palette = adafruit_imageload.load("launcher_assets/arrow_left.bmp
 left_palette.make_transparent(0)
 right_bmp, right_palette = adafruit_imageload.load("launcher_assets/arrow_right.bmp")
 right_palette.make_transparent(0)
-if "arrow" in launcher_config["palette"]:
-    left_palette[2] = right_palette[2] = int(launcher_config["palette"].get("arrow"), 16)
+left_palette[2] = right_palette[2] = launcher_config.palette_arrow
 
 left_tg = AnchoredTileGrid(bitmap=left_bmp, pixel_shader=left_palette)
 left_tg.anchor_point = (0, 0.5)
@@ -357,7 +361,7 @@ if mouse:
 
 
 help_txt = Label(terminalio.FONT, text="[Arrow]: Move [E]: Edit [Enter]: Run [1-9]: Page",
-                 color=int(launcher_config["palette"].get("fg", "0xffffff"), 16))
+                 color=launcher_config.palette_fg)
 
 help_txt.anchor_point = (0.0, 1.0)
 help_txt.anchored_position = (2, display.height-2)
@@ -393,10 +397,10 @@ def change_selected(new_selected):
 
     # tuple means an item in the grid is selected
     if isinstance(new_selected, tuple):
-        menu_grid.get_content(new_selected)[1].background_color = int(launcher_config["palette"].get("accent", "0x008800"), 16)
+        menu_grid.get_content(new_selected)[1].background_color = launcher_config.palette_accent
     # TileGrid means arrow is selected
     elif isinstance(new_selected, AnchoredTileGrid):
-        new_selected.pixel_shader[2] = int(launcher_config["palette"].get("accent", "0x008800"), 16)
+        new_selected.pixel_shader[2] = launcher_config.palette_accent
     selected = new_selected
 
 
@@ -512,7 +516,7 @@ while True:
 
         handle_key_press(c)
         print("selected", selected)
-        # app_titles[selected].background_color = int(launcher_config["palette"].get("accent", "0x008800"), 16)
+        # app_titles[selected].background_color = launcher_config.palette_accent
 
     if mouse:
         try:
