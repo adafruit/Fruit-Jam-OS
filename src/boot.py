@@ -46,6 +46,4 @@ else:
         supervisor.set_next_code_file("code.py")
     else:
         from launcher_config import LauncherConfig
-        next_code_file = LauncherConfig().boot_animation
-        if pathlib.Path(next_code_file).exists():
-            supervisor.set_next_code_file("boot_animation.py")
+        supervisor.set_next_code_file(LauncherConfig().boot_animation)
