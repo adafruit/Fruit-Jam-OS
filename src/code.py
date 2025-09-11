@@ -329,7 +329,7 @@ def atexit_callback():
     :return:
     """
     print("inside atexit callback")
-    if mouse.was_attached and not mouse.device.is_kernel_driver_active(0):
+    if mouse and mouse.was_attached and not mouse.device.is_kernel_driver_active(0):
         mouse.device.attach_kernel_driver(0)
 
 
@@ -456,7 +456,6 @@ def handle_key_press(key):
 
 
 print(f"apps: {apps}")
-print(mouse.endpoint)
 while True:
     index = None
     editor_index = None
