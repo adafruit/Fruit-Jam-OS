@@ -88,13 +88,10 @@ scaled_group.append(bg_tg)
 
 WIDTH = int(298 / 360 * display.width // scale)
 HEIGHT = int(182 / 200 * display.height // scale)
-print(f'WIDTH:{WIDTH} HEIGHT:{HEIGHT} display.width:{display.width} display.height:{display.height}')
 
 mouse = None
 last_left_button_state = 0
-last_right_button_state = 0
 left_button_pressed = False
-right_button_pressed = False
 if launcher_config.use_mouse:
     mouse = find_and_init_boot_mouse()
     if mouse:
@@ -481,10 +478,8 @@ while True:
         # Extract button states
         if buttons is None:
             current_left_button_state = 0
-            current_right_button_state = 0
         else:
             current_left_button_state = 1 if 'left' in buttons else 0
-            current_right_button_state = 1 if 'right' in buttons else 0
 
         # Detect button presses
         if current_left_button_state == 1 and last_left_button_state == 0:
@@ -492,14 +487,8 @@ while True:
         elif current_left_button_state == 0 and last_left_button_state == 1:
             left_button_pressed = False
 
-        if current_right_button_state == 1 and last_right_button_state == 0:
-            right_button_pressed = True
-        elif current_right_button_state == 0 and last_right_button_state == 1:
-            right_button_pressed = False
-
         # Update button states
         last_left_button_state = current_left_button_state
-        last_right_button_state = current_right_button_state
 
         if left_button_pressed:
             print("left click")
