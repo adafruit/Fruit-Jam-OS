@@ -97,6 +97,14 @@ class LauncherConfig:
         self._data["audio"]["volume"] = min(max(value, 1), 20)
 
     @property
+    def audio_volume_override_danger(self) -> int:
+        return int(self._data["audio"].get("volume_override_danger", 12))
+    
+    @audio_volume_override_danger.setter
+    def audio_volume(self, value: int) -> None:
+        self._data["audio"]["volume_override_danger"] = min(max(value, 1), 20)
+
+    @property
     def boot_animation(self) -> str:
         value = self._data["boot_animation"] if "boot_animation" in self._data else ""
         if not value.endswith(".py") or not pathlib.Path(value).exists():
