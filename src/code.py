@@ -13,8 +13,8 @@ import os
 import supervisor
 import sys
 import terminalio
-import usb
 
+from adafruit_usb_host_mouse import find_and_init_boot_mouse
 import adafruit_pathlib as pathlib
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.text_box import TextBox
@@ -22,7 +22,6 @@ from adafruit_display_text.bitmap_label import Label
 from adafruit_displayio_layout.layouts.grid_layout import GridLayout
 from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload
-import adafruit_usb_host_descriptors
 from adafruit_anchored_group import AnchoredGroup
 from adafruit_fruitjam.peripherals import request_display_config, VALID_DISPLAY_SIZES
 from adafruit_argv_file import read_argv, write_argv
@@ -87,64 +86,19 @@ bg_palette[0] = launcher_config.palette_bg
 bg_tg = displayio.TileGrid(bitmap=background_bmp, pixel_shader=bg_palette)
 scaled_group.append(bg_tg)
 
-# load the mouse cursor bitmap
-mouse_bmp = displayio.OnDiskBitmap("launcher_assets/mouse_cursor.bmp")
-
-# make the background pink pixels transparent
-mouse_bmp.pixel_shader.make_transparent(0)
-
-# create a TileGrid for the mouse, using its bitmap and pixel_shader
-mouse_tg = displayio.TileGrid(mouse_bmp, pixel_shader=mouse_bmp.pixel_shader)
-
-# move it to the center of the display
-mouse_tg.x = display.width // (2 * scale)
-mouse_tg.y = display.height // (2 * scale)
-# 046d:c52f
-
-# mouse = usb.core.find(idVendor=0x046d, idProduct=0xc52f)
-
-DIR_IN = 0x80
-mouse_interface_index, mouse_endpoint_address = None, None
-mouse = None
-mouse_was_attached = None
-
-if launcher_config.use_mouse:
-
-    # scan for connected USB device and loop over any found
-    print("scanning usb")
-    for device in usb.core.find(find_all=True):
-        # print device info
-        print(f"{device.idVendor:04x}:{device.idProduct:04x}")
-        print(device.manufacturer, device.product)
-        print()
-        config_descriptor = adafruit_usb_host_descriptors.get_configuration_descriptor(
-            device, 0
-        )
-        print(config_descriptor)
-
-        _possible_interface_index, _possible_endpoint_address = adafruit_usb_host_descriptors.find_boot_mouse_endpoint(device)
-        if _possible_interface_index is not None and _possible_endpoint_address is not None:
-            mouse = device
-            mouse_interface_index = _possible_interface_index
-            mouse_endpoint_address = _possible_endpoint_address
-            print(f"mouse interface: {mouse_interface_index} endpoint_address: {hex(mouse_endpoint_address)}")
-
-    mouse_was_attached = None
-    if mouse is not None:
-        # detach the kernel driver if needed
-        if mouse.is_kernel_driver_active(0):
-            mouse_was_attached = True
-            mouse.detach_kernel_driver(0)
-        else:
-            mouse_was_attached = False
-
-        # set configuration on the mouse so we can use it
-        mouse.set_configuration()
-
-    mouse_buf = array.array("b", [0] * 8)
-
 WIDTH = int(298 / 360 * display.width // scale)
 HEIGHT = int(182 / 200 * display.height // scale)
+
+mouse = None
+last_left_button_state = 0
+left_button_pressed = False
+if launcher_config.use_mouse:
+    mouse = find_and_init_boot_mouse()
+    if mouse:
+        mouse.scale = scale
+        mouse_tg = mouse.tilegrid
+        mouse_tg.x = display.width // (2 * scale)
+        mouse_tg.y = display.height // (2 * scale)
 
 config = {
     "menu_title": "Launcher Menu",
@@ -376,8 +330,8 @@ def atexit_callback():
     :return:
     """
     print("inside atexit callback")
-    if mouse_was_attached and not mouse.is_kernel_driver_active(0):
-        mouse.attach_kernel_driver(0)
+    if mouse and mouse.was_attached and not mouse.device.is_kernel_driver_active(0):
+        mouse.device.attach_kernel_driver(0)
 
 
 atexit.register(atexit_callback)
@@ -503,7 +457,6 @@ def handle_key_press(key):
 
 
 print(f"apps: {apps}")
-print(mouse_interface_index, mouse_endpoint_address)
 while True:
     index = None
     editor_index = None
@@ -519,31 +472,34 @@ while True:
         # app_titles[selected].background_color = launcher_config.palette_accent
 
     if mouse:
-        try:
-            # attempt to read data from the mouse
-            # 10ms timeout, so we don't block long if there
-            # is no data
-            count = mouse.read(mouse_endpoint_address, mouse_buf, timeout=20)
-        except usb.core.USBTimeoutError:
-            # skip the rest of the loop if there is no data
-            count = 0
 
-        # update the mouse tilegrid x and y coordinates
-        # based on the delta values read from the mouse
-        if count > 0:
-            mouse_tg.x = max(0, min((display.width // scale) - 1, mouse_tg.x + mouse_buf[1]))
-            mouse_tg.y = max(0, min((display.height // scale) - 1, mouse_tg.y + mouse_buf[2]))
+        buttons = mouse.update()
 
-            if mouse_buf[0] & (1 << 0) != 0:
-                print("left click")
-                clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
-                if clicked_cell is not None:
-                    index = (clicked_cell[1] * config["width"] + clicked_cell[0]) + (cur_page * page_size)
+        # Extract button states
+        if buttons is None:
+            current_left_button_state = 0
+        else:
+            current_left_button_state = 1 if 'left' in buttons else 0
 
-                if right_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
-                    page_right()
-                if left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
-                    page_left()
+        # Detect button presses
+        if current_left_button_state == 1 and last_left_button_state == 0:
+            left_button_pressed = True
+        elif current_left_button_state == 0 and last_left_button_state == 1:
+            left_button_pressed = False
+
+        # Update button states
+        last_left_button_state = current_left_button_state
+
+        if left_button_pressed:
+            print("left click")
+            clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
+            if clicked_cell is not None:
+                index = (clicked_cell[1] * config["width"] + clicked_cell[0]) + (cur_page * page_size)
+
+            if right_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
+                page_right()
+            if left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
+                page_left()
 
 
     if index is not None:
