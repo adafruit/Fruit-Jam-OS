@@ -101,7 +101,7 @@ class LauncherConfig:
         return int(self._data["audio"].get("volume_override_danger", 12))
     
     @audio_volume_override_danger.setter
-    def audio_volume(self, value: int) -> None:
+    def audio_volume_override_danger(self, value: int) -> None:
         self._data["audio"]["volume_override_danger"] = min(max(value, 1), 20)
 
     @property
