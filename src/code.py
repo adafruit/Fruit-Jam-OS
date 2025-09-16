@@ -95,6 +95,7 @@ left_button_pressed = False
 if launcher_config.use_mouse:
     mouse = find_and_init_boot_mouse()
     if mouse:
+        mouse.scale = 2
         mouse_tg = mouse.tilegrid
         mouse_tg.x = display.width // (2 * scale)
         mouse_tg.y = display.height // (2 * scale)
