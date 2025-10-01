@@ -32,12 +32,16 @@ else:
 i2c.unlock()
 
 if tlv320_present:
+    if "audio" in launcher_config.data and "volume" in launcher_config.data["audio"]:
+        volume_level = launcher_config.audio_volume
+    else:
+        volume_level = 0.7
     fjPeriphs = adafruit_fruitjam.peripherals.Peripherals(
-        audio_output=launcher_config.audio_output, 
+        audio_output=launcher_config.audio_output,
         safe_volume_limit=launcher_config.audio_volume_override_danger
     )
 
-    fjPeriphs.volume = launcher_config.audio_volume
+    fjPeriphs.volume = volume_level
 
     wave_file = "/boot_animation_assets/ada_fruitjam_boot_jingle.wav"
 
