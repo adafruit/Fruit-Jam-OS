@@ -26,8 +26,7 @@ class LauncherConfig:
 
     @property
     def use_mouse(self) -> bool:
-        return "use_mouse" in self._data and self._data["use_mouse"]
-
+        return "use_mouse" not in self._data or self._data["use_mouse"]
     @use_mouse.setter
     def use_mouse(self, value: bool) -> None:
         self._data["use_mouse"] = value
