@@ -302,8 +302,6 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
             line = line + " " * (window.n_cols - len(line))
             if idle_cnt >= 10:
                 line = line[:window.n_cols-len(f'{cursor.row+1},{cursor.col+1}')] + f"{cursor.row+1},{cursor.col+1}"
-            else:
-                line = line[:window.n_cols-len(f'{cursor.row+1},')] + f"{cursor.row+1},"
 
         elif user_message is not None:
             line = user_message
