@@ -455,7 +455,7 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                 cursor.down(buffer)
                 window.down(buffer, cursor)
                 window.horizontal_scroll(cursor)
-                print(f"scroll pos: {window.row}")
+                #print(f"scroll pos: {window.row}")
             elif k == "KEY_PGDN":
                 for _ in range(window.n_rows):
                     cursor.down(buffer)
