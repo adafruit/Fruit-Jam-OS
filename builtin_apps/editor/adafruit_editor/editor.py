@@ -277,6 +277,7 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
         stdscr.addstr(row, 0, line)
 
     print(f"cwd: {os.getcwd()} | abs path: {absolute_filepath} | filename: {filename}")
+    idle_cnt = 0
     while True:
         lastrow = 0
         for row, line in enumerate(buffer[window.row: window.row + window.n_rows]):
@@ -299,7 +300,10 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
             else:
                 line = f"{absolute_filepath:12} (mnt RW ^W) | ^R Run | ^O Open | ^F Find | ^G GoTo | ^S Save | ^X save & eXit | ^C quit {gc_mem_free_hint()}"
             line = line + " " * (window.n_cols - len(line))
-            line = line[:window.n_cols-len(f'{cursor.row+1},{cursor.col+1}')] + f"{cursor.row+1},{cursor.col+1}"
+            if idle_cnt >= 10:
+                line = line[:window.n_cols-len(f'{cursor.row+1},{cursor.col+1}')] + f"{cursor.row+1},{cursor.col+1}"
+            else:
+                line = line[:window.n_cols-len(f'{cursor.row+1},')] + f"{cursor.row+1},"
 
         elif user_message is not None:
             line = user_message
@@ -313,7 +317,10 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
 
         # display.refresh(minimum_frames_per_second=20)
         k = stdscr.getkey()
-        if k is not None:
+        if k is None:
+            idle_cnt += 1
+        else:
+            idle_cnt = 0
             # print(repr(k))
             if user_prompt is not None:
                 if len(k) == 1 and " " <= k <= "~":
