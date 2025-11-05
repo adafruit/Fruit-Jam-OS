@@ -21,6 +21,7 @@ LEARN_PROJECT_PATHS = [
     ("Fruit_Jam/Fruit_Jam_IRC_Client/", "Fruit_Jam_IRC_Client"),
     ("Fruit_Jam/Fruit_Jam_PyPaint/", "Fruit_Jam_PyPaint"),
     ("Fruit_Jam/Fruit_Jam_Spell_Jam/", "Fruit_Jam_Spell_Jam"),
+    ("Fruit_Jam/Fruit_Jam_Logic_Gates/", "Fruit_Jam_Logic_Gates"),
 ]
 
 def create_font_specific_zip(font_path: Path, src_dir: Path, learn_projects_dir: Path, output_dir: Path):
