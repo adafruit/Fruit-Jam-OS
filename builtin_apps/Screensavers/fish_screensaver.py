@@ -171,39 +171,3 @@ class FishScreenSaver(Group):
                 bubble.cooldown = random.randint(30, 140)
 
         return True
-
-# display = supervisor.runtime.display
-# display.root_group = main_group
-
-
-
-
-
-
-
-
-
-
-# for i in range(toast_count):
-#     new_toast = TileGrid(bitmap=sprite_sheet_bmp, pixel_shader=sprite_sheet_palette, height=1, width=1,
-#                          tile_width=64, tile_height=64, default_tile=5)
-#     new_toast.x = random.randint(0, self.display_size[0] - new_toast.tile_width)
-#     new_toast.y = random.randint(0, self.display_size[0] - new_toast.tile_width)
-#     toasts.append(new_toast)
-#     main_group.append(new_toast)
-
-# display.auto_refresh = False
-# while True:
-
-    # for toast in toasts:
-    #     toast.x -= 2
-    #     toast.y += 2
-    #
-    #     if toast.x < (0 - toast.tile_width):
-    #         toast.x = self.display_size[0]
-    #         toast.y -= random.randint(0, 63)
-    #     if toast.y > self.display_size[1]:
-    #         toast.y = -64
-    #         toast.x += random.randint(0, 63)
-
-    # display.refresh()
