@@ -14,7 +14,7 @@ LEARN_PROJECT_PATHS = [
     ("Metro/Metro_RP2350_CircuitPython_Matrix/", "Metro_RP2350_CircuitPython_Matrix"),
     ("Metro/Metro_RP2350_FlappyNyanCat/", "Metro_RP2350_FlappyNyanCat"),
     ("Metro/Metro_RP2350_Match3/match3_game/", "Metro_RP2350_Match3"),
-    ("Metro/Metro_RP2350_Breakout/", "Metro_RP2350_Breakout"),
+    ("Fruit_Jam/FruitJam_Breakout/", "FruitJam_Breakout"),
     ("Metro/Metro_RP2350_Chips_Challenge/", "Metro_RP2350_Chips_Challenge"),
     ("Metro/Metro_RP2350_Minesweeper/", "Metro_RP2350_Minesweeper"),
     ("Fruit_Jam/Larsio_Paint_Music/", "Larsio_Paint_Music"),
