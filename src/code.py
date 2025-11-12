@@ -67,7 +67,9 @@ else:
 request_display_config(*display_size)
 display = supervisor.runtime.display
 
-SCREENSAVER_TIMEOUT = 30  # seconds
+launcher_config = LauncherConfig()
+
+SCREENSAVER_TIMEOUT = launcher_config.data.get("screensaver.timeout", 30)  # seconds
 last_interaction_time = time.monotonic()
 screensaver = None
 previous_mouse_location = [0, 0]
@@ -75,8 +77,6 @@ previous_mouse_location = [0, 0]
 scale = 1
 if display.width > 360:
     scale = 2
-
-launcher_config = LauncherConfig()
 
 font_file = "/fonts/terminal.lvfontbin"
 font = bitmap_font.load_font(font_file)
@@ -525,7 +525,14 @@ while True:
             # show the screensaver
             if screensaver is None:
                 m = __import__(launcher_config.data["screensaver"]["module"])
-                cls = getattr(m, launcher_config.data["screensaver"]["class"])
+                if "class" in launcher_config.data["screensaver"]:
+                    cls = getattr(m, launcher_config.data["screensaver"]["class"])
+                else:
+                    for member in reversed(dir(m)):
+                        if member.endswith("ScreenSaver"):
+                            cls = getattr(m, member)
+                if cls is None:
+                    raise ValueError("ScreenSaver class not found")
                 screensaver = cls()
 
             request_display_config(screensaver.display_size[0], screensaver.display_size[1])
