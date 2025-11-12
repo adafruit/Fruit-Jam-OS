@@ -7,19 +7,6 @@ from displayio import Group, OnDiskBitmap, TileGrid, Bitmap, Palette
 import adafruit_imageload
 
 
-class ScreenSaver(Group):
-    def __init__(self, display_size):
-        super().__init__()
-        self.display_size = display_size
-        self.init_graphics(display_size)
-
-    def init_graphics(self, display_size):
-        raise NotImplementedError("Subclasses must implement init_graphics()")
-
-    def tick(self):
-        raise NotImplementedError("Subclasses must implement tick()")
-
-
 class BouncingLogoScreenSaver(Group):
     display_size = (640, 480)
     direction: list = [3, 3]
