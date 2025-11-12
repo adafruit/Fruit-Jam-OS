@@ -8,6 +8,8 @@ import array
 import atexit
 import json
 import math
+import time
+
 import displayio
 import os
 import supervisor
@@ -65,11 +67,16 @@ else:
 request_display_config(*display_size)
 display = supervisor.runtime.display
 
+launcher_config = LauncherConfig()
+
+SCREENSAVER_TIMEOUT = launcher_config.data.get("screensaver.timeout", 30)  # seconds
+last_interaction_time = time.monotonic()
+screensaver = None
+previous_mouse_location = [0, 0]
+
 scale = 1
 if display.width > 360:
     scale = 2
-
-launcher_config = LauncherConfig()
 
 font_file = "/fonts/terminal.lvfontbin"
 font = bitmap_font.load_font(font_file)
@@ -137,7 +144,7 @@ cur_file_index = 0
 for app_path in app_paths:
     if not app_path.exists():
         continue
-    
+
     for path in app_path.iterdir():
         print(path)
 
@@ -313,12 +320,11 @@ if len(apps) <= page_size:
 if mouse:
     scaled_group.append(mouse_tg)
 
-
 help_txt = Label(terminalio.FONT, text="[Arrow]: Move [E]: Edit [Enter]: Run [1-9]: Page",
                  color=launcher_config.palette_fg)
 
 help_txt.anchor_point = (0.0, 1.0)
-help_txt.anchored_position = (2, display.height-2)
+help_txt.anchored_position = (2, display.height - 2)
 
 print(help_txt.bounding_box)
 main_group.append(help_txt)
@@ -360,11 +366,13 @@ def change_selected(new_selected):
 
 change_selected((0, 0))
 
+
 def page_right():
     global cur_page
     if cur_page < math.ceil(len(apps) / page_size) - 1:
         cur_page += 1
         display_page(cur_page)
+
 
 def page_left():
     global cur_page
@@ -447,7 +455,7 @@ def handle_key_press(key):
             max_page = math.ceil(len(apps) / page_size)
             if requested_page <= max_page:
                 cur_page = requested_page - 1
-                display_page(requested_page-1)
+                display_page(requested_page - 1)
         else:  # key == 9
             max_page = math.ceil(len(apps) / page_size)
             cur_page = max_page - 1
@@ -460,6 +468,7 @@ print(f"apps: {apps}")
 while True:
     index = None
     editor_index = None
+    now = time.monotonic()
 
     available = supervisor.runtime.serial_bytes_available
     if available:
@@ -469,11 +478,17 @@ while True:
 
         handle_key_press(c)
         print("selected", selected)
+        last_interaction_time = now
         # app_titles[selected].background_color = launcher_config.palette_accent
 
     if mouse:
 
         buttons = mouse.update()
+
+        if [mouse.x, mouse.y] != previous_mouse_location:
+            last_interaction_time = now
+        previous_mouse_location[0] = mouse.x
+        previous_mouse_location[1] = mouse.y
 
         # Extract button states
         if buttons is None:
@@ -492,6 +507,7 @@ while True:
 
         if left_button_pressed:
             print("left click")
+            last_interaction_time = now
             clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
             if clicked_cell is not None:
                 index = (clicked_cell[1] * config["width"] + clicked_cell[0]) + (cur_page * page_size)
@@ -501,6 +517,45 @@ while True:
             if left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
                 page_left()
 
+    if "screensaver" in launcher_config.data:
+        if last_interaction_time + SCREENSAVER_TIMEOUT < now:
+            if display.auto_refresh:
+                display.auto_refresh = False
+
+            # show the screensaver
+            if screensaver is None:
+                m = __import__(launcher_config.data["screensaver"]["module"])
+                if "class" in launcher_config.data["screensaver"]:
+                    cls = getattr(m, launcher_config.data["screensaver"]["class"])
+                else:
+                    for member in reversed(dir(m)):
+                        if member.endswith("ScreenSaver"):
+                            cls = getattr(m, member)
+                if cls is None:
+                    raise ValueError("ScreenSaver class not found")
+                screensaver = cls()
+
+            request_display_config(screensaver.display_size[0], screensaver.display_size[1])
+            display = supervisor.runtime.display
+            if display.root_group != main_group:
+                display.root_group = main_group
+
+            if screensaver not in main_group:
+                main_group.append(screensaver)
+
+            needs_refresh = screensaver.tick()
+            if needs_refresh:
+                display.refresh()
+
+        else:
+            if not display.auto_refresh:
+                display.auto_refresh = True
+            if screensaver in main_group:
+                main_group.remove(screensaver)
+                request_display_config(*display_size)
+                display = supervisor.runtime.display
+                if display.root_group != main_group:
+                    display.root_group = main_group
 
     if index is not None:
         print("index", index)
