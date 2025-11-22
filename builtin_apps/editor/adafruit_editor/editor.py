@@ -426,7 +426,7 @@ def editor(stdscr, filename, mouse=None, terminal_tilegrid=None):  # pylint: dis
                     f.write(json.dumps(["/apps/editor/code.py", Path(filename).absolute()]))
 
                 supervisor.set_next_code_file(filename, sticky_on_reload=False, reload_on_error=True,
-                                              working_directory=Path(filename).parent.absolute())
+                    reload_on_success=True, working_directory=Path(filename).parent.absolute())
                 supervisor.reload()
             elif k == "\x0f":  # Ctrl-O
 
