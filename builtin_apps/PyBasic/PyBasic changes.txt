@@ -5,7 +5,7 @@ Changes made to https://github.com/richpl/PyBasic on 8/6/2025 to support Circuit
 Added the following import (line 30):
 from traceback import print_exception
 
-Replaced exception print (line 130):
+Replaced exception print (line 171):
 Orig: print(e, file=stderr, flush=True)
 New: print_exception(e,e,e.__traceback__ if hasattr(e,'__traceback__') else None)
 
@@ -14,7 +14,7 @@ New: print_exception(e,e,e.__traceback__ if hasattr(e,'__traceback__') else None
 Added the following import (line 28):
 import os
 
-Added command to set current directory to folder loaded program is loaded from (line 236-239):
+Added command to set current directory to folder loaded program is loaded from (line 258-261):
 if file.rfind('/') == 0:
     os.chdir('/')
 elif file.rfind('/') != -1:
