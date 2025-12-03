@@ -27,6 +27,19 @@ $ python interpreter.py
 
 Although this started of as a personal project, it has been enhanced considerably by some other Github users. You can see them in the list of contributors! It's very much a group endeavour now.
 
+## Recent Updates
+
+### Array INPUT and READ Support
+The interpreter now supports reading data directly into array elements using both **INPUT** and **READ** statements:
+
+- **Array Elements as Targets**: Use syntax like `INPUT A(1), B(I+2)` and `READ N$(1), N$(2)`
+- **Expression Indices**: Support for complex expressions in array indices like `A(I*2+1)` 
+- **Mixed Data Types**: Read numeric and string data into appropriate array types
+- **Error Handling**: Proper SUBSCRIPT ERROR and OUT OF DATA error messages
+- **Specification Compliant**: Follows classic BASIC behavior for all edge cases
+
+See the comprehensive test program `examples/array_input_read_tests.bas` for demonstrations of all functionality.
+
 ## Operators
 
 A limited range of arithmetic expressions are provided. Addition and subtraction have the lowest precedence,
@@ -135,6 +148,38 @@ The program may be erased entirely from memory using the **NEW** command:
 >
 ```
 
+Program line numbers can be renumbered using the **RENUMBER** command:
+
+```
+> 10 A = 1
+> 20 IF A = 1 THEN 100
+> 30 GOTO 10
+> 100 PRINT "DONE"
+> LIST
+10 A = 1
+20 IF A = 1 THEN 100
+30 GOTO 10
+100 PRINT "DONE"
+> RENUMBER 100,100
+Program renumbered
+> LIST
+100 A = 1
+200 IF A = 1 THEN 400
+300 GOTO 100
+400 PRINT "DONE"
+>
+```
+
+The RENUMBER command supports various parameter combinations:
+
+* **RENUMBER** - Renumber whole program starting at 10 with increments of 10
+* **RENUMBER 100** - Start renumbering at 100 with increments of 10
+* **RENUMBER 50,5** - Start at 50 with increments of 5
+* **RENUMBER 100,10,200,300** - Renumber only lines 200-300, starting at 100
+* **RENUMBER ,,200** - Renumber lines 200 and above using defaults
+
+The RENUMBER command automatically updates line number references in GOTO, GOSUB, IF...THEN, ON...GOTO, ON...GOSUB, and RESTORE statements while preserving line numbers in string literals and comments.
+
 Finally, it is possible to terminate the interpreter by issuing the **EXIT** command:
 
 ```
@@ -168,8 +213,7 @@ Program terminated
 ### Statement structure
 
 As per usual in old school BASIC, all program statements must be prefixed with a line number which indicates the order in which the
-statements may be executed. There is no renumber command to allow all line numbers to be modified. A statement may be modified or
-replaced by re-entering a statement with the same line number:
+statements may be executed. A statement may be modified or replaced by re-entering a statement with the same line number:
 
 ```
 > 10 LET I = 10
@@ -263,8 +307,7 @@ Empty array value returned in line 30
 >
 ```
 
-As in all implementations of BASIC, there is no garbage collection (not surprising since all variables
-have global scope)!
+Since **all PyBasic variables have a global scope** and string memory is managed by the python interpreter, there is no garbage collection in PyBasic.  
 
 ### Program constants
 
@@ -312,8 +355,72 @@ Hello Another Line of Data
 >
 ```
 
-It is a limitation of this BASIC dialect that it is not possible to assign constants directly to array variables
-within a **READ** statement, only simple variables.
+#### Array Support in READ
+
+The **READ** statement now supports reading data directly into array elements, using expressions for array indices:
+
+```
+> 10 DIM A(5)
+> 20 DIM N$(3)
+> 30 DATA 10, 20, 30, "Hello", "World"
+> 40 READ A(1), A(2), A(3), N$(1), N$(2)
+> 50 PRINT A(1); A(2); A(3); N$(1); N$(2)
+> RUN
+102030HelloWorld
+>
+```
+
+Array indices can be complex expressions including variables and arithmetic:
+
+```
+> 10 DIM B(10)
+> 20 I = 2
+> 30 DATA 100, 200
+> 40 READ B(I*3), B(I+4)
+> 50 PRINT "B(6)="; B(6)  REM Shows 200 (second value overwrites first)
+> RUN
+B(6)=200
+>
+```
+
+Proper error handling is provided:
+- **SUBSCRIPT ERROR**: When array indices are out of bounds or negative
+- **OUT OF DATA**: When there are no more DATA items to read
+- Index validation occurs BEFORE consuming DATA items
+
+#### Array Support in READ
+
+The **READ** statement now supports reading data directly into array elements, using expressions for array indices:
+
+```
+> 10 DIM A(5)
+> 20 DIM N$(3)
+> 30 DATA 10, 20, 30, "Hello", "World"
+> 40 READ A(1), A(2), A(3), N$(1), N$(2)
+> 50 PRINT A(1); A(2); A(3); N$(1); N$(2)
+> RUN
+102030HelloWorld
+>
+```
+
+Array indices can be complex expressions including variables and arithmetic:
+
+```
+> 10 DIM B(10)
+> 20 I = 2
+> 30 DATA 100, 200
+> 40 READ B(I*3), B(I+4)
+> 50 PRINT "B(6)="; B(6)  REM Shows 200 (second value overwrites first)
+> RUN
+B(6)=200
+>
+```
+
+Proper error handling is provided:
+- **SUBSCRIPT ERROR**: When array indices are out of bounds or negative
+- **OUT OF DATA**: When there are no more DATA items to read
+- Index validation occurs BEFORE consuming DATA items
+
 
 ### Comments
 
@@ -506,6 +613,49 @@ be replaced by the start value, it will not be evaluated.
 
 After the completion of the loop, the loop variable value will be the end value + step value (unless
 the loop is exited using a **GOTO** statement).
+
+Conditional loops are achieved through the use of **WHILE-WEND** statements. The loop continues to execute
+as long as the specified condition remains true. The condition is evaluated before each iteration, so if
+the condition is false initially, the loop body will not execute at all.
+
+```
+> 10 LET I = 1
+> 20 WHILE I <= 3
+> 30 PRINT "Count: "; I
+> 40 LET I = I + 1
+> 50 WEND
+> RUN
+Count: 1
+Count: 2
+Count: 3
+>
+```
+
+WHILE loops may be nested within one another and can also be nested within FOR loops and vice versa.
+The loop will terminate when the condition becomes false or when exited using a **GOTO** statement.
+
+**Example of nested WHILE loops:**
+
+```
+> 10 LET I = 1
+> 20 WHILE I <= 2
+> 30 PRINT "Outer: "; I
+> 40 LET J = 1
+> 50 WHILE J <= 2
+> 60 PRINT "  Inner: "; J
+> 70 LET J = J + 1
+> 80 WEND
+> 90 LET I = I + 1
+> 100 WEND
+> RUN
+Outer: 1
+  Inner: 1
+  Inner: 2
+Outer: 2
+  Inner: 1
+  Inner: 2
+>
+```
 
 ### Conditionals
 
@@ -721,6 +871,41 @@ Num, Str, Num: 22, hello!, 33
 >
 ```
 
+#### Array Support in INPUT
+
+The **INPUT** statement now supports inputting data directly into array elements:
+
+```
+> 10 DIM A(3)
+> 20 DIM N$(2)
+> 30 INPUT "Enter 3 numbers: "; A(1), A(2), A(3)
+> 40 INPUT "Enter 2 names: "; N$(1), N$(2)
+> 50 PRINT A(1); A(2); A(3); N$(1); N$(2)
+> RUN
+Enter 3 numbers: 5, 10, 15
+Enter 2 names: Alice, Bob
+51015AliceBob
+>
+```
+
+Array indices can use expressions with variables:
+
+```
+> 10 DIM B(10)
+> 20 I = 5
+> 30 INPUT "Enter value for B(I): "; B(I)
+> 40 PRINT "B(5)="; B(5)
+> RUN
+Enter value for B(I): 42
+B(5)=42
+>
+```
+
+Error handling includes:
+- **SUBSCRIPT ERROR**: When array indices are out of bounds
+- **"? REDO FROM START"**: When input types don't match array types
+- Index validation occurs BEFORE prompting for input
+
 A mismatch between the input value and input variable type will trigger an error, and the user will be asked
 to re-input the values again.
 
@@ -928,6 +1113,8 @@ and expanded by Don Woods.
 
 * *Pneuma.bas* - A brief 21st century take on the venerable text adventure.
 
+* *array_input_read_tests.bas* - A comprehensive test program that validates array INPUT and READ functionality, including expression indices, boundary conditions, error handling, and mixed data types. Demonstrates all the features of array element input and data reading.
+
 ## Informal grammar definition
 
 **ABS**(*numerical-expression*) - Calculates the absolute value of the result of *numerical-expression*
@@ -1076,11 +1263,8 @@ a subroutine call, or program termination. This paradigm of using the parser to 
 object to make control flow decisions and to track execution, and a signalling mechanism to allow the parser to signal
 control flow changes to the Program object, is used consistently throughout the implementation.
 
-## Open issues
+## Python Basic feature
 
-* It is not possible to renumber a program. This would require considerable extra functionality.
-* Negative values are printed with a space (e.g. '- 5') in program listings because of tokenization. This does not affect functionality.
-* User input values cannot be directly assigned to array variables in an **INPUT** or **READ** statement
 * Strings representing numbers (e.g. "10") can actually be assigned to numeric variables in **INPUT** and **READ** statements without an
 error, Python will silently convert them to integers.
 
