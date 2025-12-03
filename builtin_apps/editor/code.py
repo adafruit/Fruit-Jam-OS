@@ -86,3 +86,4 @@ def atexit_callback():
 
 atexit.register(atexit_callback)
 editor.edit(file, terminal, mouse, terminal_area)
+supervisor.reload()
