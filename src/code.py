@@ -535,10 +535,11 @@ while True:
                     raise ValueError("ScreenSaver class not found")
                 screensaver = cls()
 
-            request_display_config(screensaver.display_size[0], screensaver.display_size[1])
-            display = supervisor.runtime.display
-            if display.root_group != main_group:
-                display.root_group = main_group
+            if hasattr(screensaver, "display_size"):
+                request_display_config(screensaver.display_size[0], screensaver.display_size[1])
+                display = supervisor.runtime.display
+                if display.root_group != main_group:
+                    display.root_group = main_group
 
             if screensaver not in main_group:
                 main_group.append(screensaver)
@@ -550,8 +551,11 @@ while True:
         else:
             if not display.auto_refresh:
                 display.auto_refresh = True
+
             if screensaver in main_group:
                 main_group.remove(screensaver)
+
+            if hasattr(screensaver, "display_size"):
                 request_display_config(*display_size)
                 display = supervisor.runtime.display
                 if display.root_group != main_group:
