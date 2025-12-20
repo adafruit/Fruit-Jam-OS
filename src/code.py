@@ -543,6 +543,7 @@ while True:
 
             if screensaver not in main_group:
                 main_group.append(screensaver)
+                display.refresh()
 
             needs_refresh = screensaver.tick()
             if needs_refresh:
