@@ -1,16 +1,17 @@
 # SPDX-FileCopyrightText: 2025 Cooper Dalrymple (@relic-se)
 # SPDX-License-Identifier: MIT
 import json
+
 import adafruit_pathlib as pathlib
 
-class LauncherConfig:
 
+class LauncherConfig:
     def __init__(self):
         self._data = {}
         for directory in ("/", "/sd/", "/saves/"):
             launcher_config_path = directory + "launcher.conf.json"
             if pathlib.Path(launcher_config_path).exists():
-                with open(launcher_config_path, "r") as f:
+                with open(launcher_config_path) as f:
                     self._data = self._data | json.load(f)
         for key in ("palette", "audio"):
             if key not in self._data:
@@ -27,6 +28,7 @@ class LauncherConfig:
     @property
     def use_mouse(self) -> bool:
         return "use_mouse" not in self._data or self._data["use_mouse"]
+
     @use_mouse.setter
     def use_mouse(self, value: bool) -> None:
         self._data["use_mouse"] = value
@@ -45,7 +47,7 @@ class LauncherConfig:
 
     @palette_bg.setter
     def palette_bg(self, value: int) -> None:
-        self._data["palette"]["bg"] = "0x{:06x}".format(value)
+        self._data["palette"]["bg"] = f"0x{value:06x}"
 
     @property
     def palette_fg(self) -> int:
@@ -53,7 +55,7 @@ class LauncherConfig:
 
     @palette_fg.setter
     def palette_fg(self, value: int) -> None:
-        self._data["palette"]["fg"] = "0x{:06x}".format(value)
+        self._data["palette"]["fg"] = f"0x{value:06x}"
 
     @property
     def palette_arrow(self) -> int:
@@ -61,7 +63,7 @@ class LauncherConfig:
 
     @palette_arrow.setter
     def palette_arrow(self, value: int) -> None:
-        self._data["palette"]["arrow"] = "0x{:06x}".format(value)
+        self._data["palette"]["arrow"] = f"0x{value:06x}"
 
     @property
     def palette_accent(self) -> int:
@@ -69,7 +71,7 @@ class LauncherConfig:
 
     @palette_accent.setter
     def palette_accent(self, value: int) -> None:
-        self._data["palette"]["accent"] = "0x{:06x}".format(value)
+        self._data["palette"]["accent"] = f"0x{value:06x}"
 
     @property
     def audio_output(self) -> str:

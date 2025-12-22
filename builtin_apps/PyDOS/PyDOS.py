@@ -98,17 +98,17 @@ def PyDOS():
                 print("connected host computer in read-write mode. After restarting,")
                 print("you can use the 'readonly' command in PyDOS to return to read-only mode.\n")
                 if input('Are you sure? (Y/N): ').upper() == 'Y':
-                    boot_args_file = argv_filename("/boot.py") 
-                    with open(boot_args_file, "w") as f: 
+                    boot_args_file = argv_filename("/boot.py")
+                    with open(boot_args_file, "w") as f:
                         f.write('[false, "/code.py"]')
                     microcontroller.reset()
-                else: 
+                else:
                     break
             elif ans[:1].upper() == "C":
                 break
             else:
                 print("\nInvalid entry",ans[:1])
-            
+
 
     envVars["PATH"] = f'{sep};{sep}apps{sep}PyDOS;{sep}apps{sep}PyBasic'
     envVars["PROMPT"] = "$P$G"
@@ -237,7 +237,7 @@ def PyDOS():
 
                 if envVars["_display"].root_group != displayio.CIRCUITPYTHON_TERMINAL:
                     envVars["_display"].root_group = displayio.CIRCUITPYTHON_TERMINAL
-            
+
                 envVars["_display"].auto_refresh = True
                 envVars["_scrHeight"] = envVars["_display"].root_group[0].height
                 envVars["_scrWidth"] = envVars["_display"].root_group[0].width - 1
@@ -1296,8 +1296,8 @@ def PyDOS():
                 print("The system is already set to read-only.")
             else:
                 if input("Setting the system to read-only will cause the Fruit Jam to restart? (y/n): ").upper() == "Y":
-                    boot_args_file = argv_filename("/boot.py") 
-                    with open(boot_args_file, "w") as f: 
+                    boot_args_file = argv_filename("/boot.py")
+                    with open(boot_args_file, "w") as f:
                         f.write('[true, "/code.py"]')
                     microcontroller.reset()
 
@@ -1397,4 +1397,3 @@ def PyDOS():
 
 PyDOS()
 reload()
-

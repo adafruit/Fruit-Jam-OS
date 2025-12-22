@@ -4,30 +4,29 @@
 """
 Fruit Jam OS Launcher
 """
+
 import array
 import atexit
 import json
 import math
+import os
+import sys
 import time
 
-import displayio
-import os
-import supervisor
-import sys
-import terminalio
-
-from adafruit_usb_host_mouse import find_and_init_boot_mouse
-import adafruit_pathlib as pathlib
-from adafruit_bitmap_font import bitmap_font
-from adafruit_display_text.text_box import TextBox
-from adafruit_display_text.bitmap_label import Label
-from adafruit_displayio_layout.layouts.grid_layout import GridLayout
-from adafruit_anchored_tilegrid import AnchoredTileGrid
 import adafruit_imageload
+import adafruit_pathlib as pathlib
+import displayio
+import supervisor
+import terminalio
 from adafruit_anchored_group import AnchoredGroup
-from adafruit_fruitjam.peripherals import request_display_config, VALID_DISPLAY_SIZES
+from adafruit_anchored_tilegrid import AnchoredTileGrid
 from adafruit_argv_file import read_argv, write_argv
-
+from adafruit_bitmap_font import bitmap_font
+from adafruit_display_text.bitmap_label import Label
+from adafruit_display_text.text_box import TextBox
+from adafruit_displayio_layout.layouts.grid_layout import GridLayout
+from adafruit_fruitjam.peripherals import VALID_DISPLAY_SIZES, request_display_config
+from adafruit_usb_host_mouse import find_and_init_boot_mouse
 from launcher_config import LauncherConfig
 
 """
@@ -50,9 +49,12 @@ if args is not None and len(args) > 0:
     if remaining_args is not None:
         write_argv(next_code_file, remaining_args)
 
-    next_code_file = next_code_file
-    supervisor.set_next_code_file(next_code_file, sticky_on_reload=False, reload_on_error=True,
-                                  working_directory="/".join(next_code_file.split("/")[:-1]))
+    supervisor.set_next_code_file(
+        next_code_file,
+        sticky_on_reload=False,
+        reload_on_error=True,
+        working_directory="/".join(next_code_file.split("/")[:-1]),
+    )
     print(f"launching: {next_code_file}")
     supervisor.reload()
 
@@ -119,10 +121,14 @@ page_size = config["width"] * config["height"]
 
 default_icon_bmp, default_icon_palette = adafruit_imageload.load("launcher_assets/default_icon.bmp")
 default_icon_palette.make_transparent(0)
-menu_grid = GridLayout(x=(display.width // scale - WIDTH) // 2,
-                       y=(display.height // scale - HEIGHT) // 2,
-                       width=WIDTH, height=HEIGHT, grid_size=(config["width"], config["height"]),
-                       divider_lines=False)
+menu_grid = GridLayout(
+    x=(display.width // scale - WIDTH) // 2,
+    y=(display.height // scale - HEIGHT) // 2,
+    width=WIDTH,
+    height=HEIGHT,
+    grid_size=(config["width"], config["height"]),
+    divider_lines=False,
+)
 scaled_group.append(menu_grid)
 
 menu_title_txt = Label(font, text="Fruit Jam OS", color=launcher_config.palette_fg)
@@ -132,10 +138,7 @@ scaled_group.append(menu_title_txt)
 
 app_titles = []
 apps = []
-app_paths = (
-    pathlib.Path("/apps"),
-    pathlib.Path("/sd/apps")
-)
+app_paths = (pathlib.Path("/apps"), pathlib.Path("/sd/apps"))
 
 pages = [{}]
 
@@ -157,7 +160,7 @@ for app_path in app_paths:
             metadata_file = None
             metadata = None
         if metadata_file is not None:
-            with open(metadata_file.absolute(), "r") as f:
+            with open(metadata_file.absolute()) as f:
                 metadata = json.load(f)
 
         if metadata is not None and "icon" in metadata:
@@ -173,18 +176,19 @@ for app_path in app_paths:
         else:
             title = path.name
 
-        apps.append({
-            "title": title,
-            "icon": str(icon_file.absolute()) if icon_file is not None else None,
-            "file": str(code_file.absolute()),
-            "dir": path
-        })
+        apps.append(
+            {
+                "title": title,
+                "icon": str(icon_file.absolute()) if icon_file is not None else None,
+                "file": str(code_file.absolute()),
+                "dir": path,
+            }
+        )
 
 apps = sorted(apps, key=lambda app: app["title"].lower())
 
 print("launcher config", launcher_config)
 if len(launcher_config.favorites):
-
     for favorite_app in reversed(launcher_config.favorites):
         print("checking favorite", favorite_app)
         for app in apps:
@@ -215,8 +219,14 @@ def _create_cell_group(app):
         cell_group.append(icon_tg)
 
     icon_tg.x = cell_width // 2 - icon_tg.tile_width // 2
-    title_txt = TextBox(font, text=app["title"], width=cell_width, height=18,
-                        align=TextBox.ALIGN_CENTER, color=launcher_config.palette_fg)
+    title_txt = TextBox(
+        font,
+        text=app["title"],
+        width=cell_width,
+        height=18,
+        align=TextBox.ALIGN_CENTER,
+        color=launcher_config.palette_fg,
+    )
     icon_tg.y = (cell_height - icon_tg.tile_height - title_txt.height) // 2
     cell_group.append(title_txt)
     title_txt.anchor_point = (0, 0)
@@ -320,8 +330,11 @@ if len(apps) <= page_size:
 if mouse:
     scaled_group.append(mouse_tg)
 
-help_txt = Label(terminalio.FONT, text="[Arrow]: Move [E]: Edit [Enter]: Run [1-9]: Page",
-                 color=launcher_config.palette_fg)
+help_txt = Label(
+    terminalio.FONT,
+    text="[Arrow]: Move [E]: Edit [Enter]: Run [1-9]: Page",
+    color=launcher_config.palette_fg,
+)
 
 help_txt.anchor_point = (0.0, 1.0)
 help_txt.anchored_position = (2, display.height - 2)
@@ -392,7 +405,6 @@ def handle_key_press(key):
             change_selected((0, 0))
         elif selected is right_tg:
             change_selected((2, 0))
-
 
     # down key
     elif key == "\x1b[B":
@@ -482,7 +494,6 @@ while True:
         # app_titles[selected].background_color = launcher_config.palette_accent
 
     if mouse:
-
         buttons = mouse.update()
 
         if [mouse.x, mouse.y] != previous_mouse_location:
@@ -494,7 +505,7 @@ while True:
         if buttons is None:
             current_left_button_state = 0
         else:
-            current_left_button_state = 1 if 'left' in buttons else 0
+            current_left_button_state = 1 if "left" in buttons else 0
 
         # Detect button presses
         if current_left_button_state == 1 and last_left_button_state == 0:
@@ -510,7 +521,9 @@ while True:
             last_interaction_time = now
             clicked_cell = menu_grid.which_cell_contains((mouse_tg.x, mouse_tg.y))
             if clicked_cell is not None:
-                index = (clicked_cell[1] * config["width"] + clicked_cell[0]) + (cur_page * page_size)
+                index = (clicked_cell[1] * config["width"] + clicked_cell[0]) + (
+                    cur_page * page_size
+                )
 
             if right_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
                 page_right()
@@ -561,8 +574,12 @@ while True:
         print("index", index)
         print(f"selected: {apps[index]}")
         launch_file = apps[index]["file"]
-        supervisor.set_next_code_file(launch_file, sticky_on_reload=False, reload_on_error=True,
-                                      working_directory="/".join(launch_file.split("/")[:-1]))
+        supervisor.set_next_code_file(
+            launch_file,
+            sticky_on_reload=False,
+            reload_on_error=True,
+            working_directory="/".join(launch_file.split("/")[:-1]),
+        )
         supervisor.reload()
     if editor_index is not None:
         print("editor_index", editor_index)
@@ -574,6 +591,10 @@ while True:
         # with open(argv_filename(launch_file), "w") as f:
         #     f.write(json.dumps([apps[editor_index]["file"]]))
 
-        supervisor.set_next_code_file(editor_launch_file, sticky_on_reload=False, reload_on_error=True,
-                                      working_directory="/".join(editor_launch_file.split("/")[:-1]))
+        supervisor.set_next_code_file(
+            editor_launch_file,
+            sticky_on_reload=False,
+            reload_on_error=True,
+            working_directory="/".join(editor_launch_file.split("/")[:-1]),
+        )
         supervisor.reload()

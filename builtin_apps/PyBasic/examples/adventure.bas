@@ -53,7 +53,7 @@
 234 data 7,12,13,40,38
 235 data 69,0,46,0,0
 236 data 15,60,82,22,250
-240 for ii = 1 to 15 step 5 
+240 for ii = 1 to 15 step 5
 241 read dx1,dx2,dx3,dx4,dx5:o(ii)=dx1:o(ii+1)=dx2:o(ii+2)=dx3:o(ii+3)=dx4:o(ii+4)=dx5
 242 PRINT ".";
 243 next ii
@@ -83,7 +83,7 @@
 420 if c$ = "" then 410
 425 PRINT:PRINT
 430 c$ = upper$(c$)
-449 rem    65-90 = A-Z               48-57 = 0-9         46 = . 44 = ,   
+449 rem    65-90 = A-Z               48-57 = 0-9         46 = . 44 = ,
 450 for x = 1 to len(c$)
 460 z5 = asc(mid$(c$,x,1))
 470 if (z5 > 64 and z5 < 91) or (z5 > 47 and z5 < 58) or z5 = 44 then 480 else 471
@@ -881,7 +881,7 @@
 8431  restore 9960+z1:read d$:x1=1
 8440 NEXT Z1
 8450 RETURN
-8460 REM 
+8460 REM
 8470 REM MAKE SURE HE'S CARRYING ITEM * Z3
 8480 REM
 8490 IF S(Z3)=-1 THEN 8530
