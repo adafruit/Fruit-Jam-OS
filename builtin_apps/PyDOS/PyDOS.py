@@ -34,22 +34,11 @@ except ImportError:
 
 import gc
 
-imp = "B"
-if implementation.name.upper() == "MICROPYTHON":
-    from micropython import mem_info
-
-    readonly = False
-    imp = "M"
-elif implementation.name.upper() == "CIRCUITPYTHON":
-    from supervisor import runtime, reload
-    import storage
-    import microcontroller
-    import displayio
-    from adafruit_argv_file import argv_filename
-
-    readonly = storage.getmount("/").readonly
-
-    imp = "C"
+from supervisor import runtime, reload
+import storage
+import microcontroller
+import displayio
+from adafruit_argv_file import argv_filename
 
 gc.collect()
 if "threshold" in dir(gc):
@@ -112,6 +101,7 @@ def PyDOS():
     ]
 
     print("Starting Py-DOS... Type 'help' for help.")
+    readonly = storage.getmount("/").readonly
     if readonly:
         print(
             "Warning: Py-DOS is running in read-only mode, some commands may not work."
@@ -128,6 +118,15 @@ def PyDOS():
                     "you can use the 'readonly' command in PyDOS to return to read-only mode.\n"
                 )
                 if input("Are you sure? (Y/N): ").upper() == "Y":
+                    if not runtime.usb_connected:
+                        try:
+                            storage.remount('/',False)
+                            readonly = storage.getmount("/").readonly
+                        except RuntimeError as err:
+                            print(f'{err}')
+                            print('Try power cycling or resetting the microcontroller')
+                        continue
+
                     try:
                         boot_args_file = argv_filename("/boot.py")
                         with open(boot_args_file, "w") as f:
@@ -173,8 +172,7 @@ def PyDOS():
 
     (wldCLen, recursiveFail) = calcWildCardLen(wldCLen, recursiveFail)
     wldCAdj = int(1 + 0.2 * wldCLen)
-    if imp == "C":
-        wldCAdj += 5
+    wldCAdj += 5
     wldCLen = max(1, wldCLen - wldCAdj)
 
     if wldCLen < 60:
@@ -246,9 +244,8 @@ def PyDOS():
                 pass
             keyIn = Pydos_ui.read_keyboard(1)
         else:
-            if imp == "C":
-                while not runtime.serial_bytes_available:
-                    pass
+            while not runtime.serial_bytes_available:
+                pass
             keyIn = stdin.read(1)
         print("")
         return keyIn
@@ -289,27 +286,26 @@ def PyDOS():
         except KeyboardInterrupt:
             print("^C")
 
-        if imp == "C":
-            if "_display" not in envVars.keys():
-                if "display" in dir(Pydos_ui):
-                    envVars["_display"] = Pydos_ui.display
-                elif "display" in dir(runtime) and runtime.display is not None:
-                    envVars["_display"] = runtime.display
-                elif "display" in dir(board):
-                    envVars["_display"] = board.display
+        if "_display" not in envVars.keys():
+            if "display" in dir(Pydos_ui):
+                envVars["_display"] = Pydos_ui.display
+            elif "display" in dir(runtime) and runtime.display is not None:
+                envVars["_display"] = runtime.display
+            elif "display" in dir(board):
+                envVars["_display"] = board.display
 
-            # If _displayTerm is set to "N", do not restore terminal to display
-            if (
-                "_display" in envVars.keys()
-                and envVars["_display"] is not None
-                and envVars.get("_displayTerm", "Y")[0].upper() != "N"
-            ):
-                if envVars["_display"].root_group != displayio.CIRCUITPYTHON_TERMINAL:
-                    envVars["_display"].root_group = displayio.CIRCUITPYTHON_TERMINAL
+        # If _displayTerm is set to "N", do not restore terminal to display
+        if (
+            "_display" in envVars.keys()
+            and envVars["_display"] is not None
+            and envVars.get("_displayTerm", "Y")[0].upper() != "N"
+        ):
+            if envVars["_display"].root_group != displayio.CIRCUITPYTHON_TERMINAL:
+                envVars["_display"].root_group = displayio.CIRCUITPYTHON_TERMINAL
 
-                envVars["_display"].auto_refresh = True
-                envVars["_scrHeight"] = envVars["_display"].root_group[0].height
-                envVars["_scrWidth"] = envVars["_display"].root_group[0].width - 1
+            envVars["_display"].auto_refresh = True
+            envVars["_scrHeight"] = envVars["_display"].root_group[0].height
+            envVars["_scrWidth"] = envVars["_display"].root_group[0].width - 1
 
         return
 
@@ -968,14 +964,13 @@ def PyDOS():
             gc.collect()
             print(f"\n{gc.mem_free() / 1024:10.1f} Kb free conventional memory")
             print(f"{gc.mem_alloc() / 1024:10.1f} Kb used conventional memory")
-            if imp == "M":
-                if "threshold" in dir(gc):
-                    print(f"{gc.threshold() / 1024:10.1f} Kb current threshold value")
+            if "threshold" in dir(gc):
+                print(f"{gc.threshold() / 1024:10.1f} Kb current threshold value")
 
-                if swBits & int("010000", 2):
-                    print(mem_info(1))
-                elif swBits:
-                    print("Illegal switch, Command Format: mem[/d]")
+            if swBits & int("010000", 2):
+                print(mem_info(1))
+            elif swBits:
+                print("Illegal switch, Command Format: mem[/d]")
 
         elif cmd == "VER":
             print(f"PyDOS [Version {_VER}]")
@@ -1249,18 +1244,21 @@ def PyDOS():
                         else:
                             if newdir in os.listdir(pFmt(tmpDir, False)):
                                 if aFile(tmpDir + newdir):
-                                    os.remove(tmpDir + newdir)
-                                    print(
-                                        (tmpDir + newdir).replace(
-                                            "/",
-                                            (
-                                                "\\"
-                                                if envVars.get("DIRSEP", "/") == "\\"
-                                                else "/"
+                                    try:
+                                        os.remove(tmpDir + newdir)
+                                        print(
+                                            (tmpDir + newdir).replace(
+                                                "/",
+                                                (
+                                                    "\\"
+                                                    if envVars.get("DIRSEP", "/") == "\\"
+                                                    else "/"
+                                                ),
                                             ),
-                                        ),
-                                        "deleted.",
-                                    )
+                                            "deleted.",
+                                        )
+                                    except OSError as err:
+                                        print(f"Unabled to delete file: {err}")
                                 else:
                                     ans = input(
                                         tmpDir
@@ -1627,13 +1625,18 @@ def PyDOS():
                 print("Illegal switch, Command Format: PEXEC[/q] python command")
 
         elif cmd == "READONLY":
-            if imp != "C":
-                print(
-                    "READONLY command is only available when running on CirucitPython."
-                )
-            elif readonly:
+            if readonly:
                 print("The system is already set to read-only.")
             else:
+                if not runtime.usb_connected:
+                    try:
+                        storage.remount('/',True)
+                        readonly = storage.getmount("/").readonly
+                    except RuntimeError as err:
+                        print(f'{err}')
+                        print('Try power cycling or resetting the microcontroller')
+                    continue
+
                 if (
                     input(
                         "Setting the system to read-only will cause the Fruit Jam to restart? (y/n): "
