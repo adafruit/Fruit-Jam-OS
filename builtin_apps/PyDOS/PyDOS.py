@@ -1628,6 +1628,25 @@ def PyDOS():
             if readonly:
                 print("The system is already set to read-only.")
             else:
+                rewrite = False
+                try:
+                    with open("/boot.py", "r") as f:
+                        filtered_lines = []
+                        for line in f:
+                            if (
+                                line.replace(" ", "").replace("'", '"')
+                            ).strip() != 'storage.remount("/",False)':
+                                filtered_lines.append(line)
+                            else:
+                                rewrite = True
+                except OSError:
+                    pass
+
+                if rewrite:
+                    with open("/boot.py", "w") as f:
+                        for line in filtered_lines:
+                            f.write(line)
+
                 if not runtime.usb_connected:
                     try:
                         storage.remount('/',True)
@@ -1648,17 +1667,7 @@ def PyDOS():
                         with open(boot_args_file, "w") as f:
                             f.write('[true, "/code.py"]')
                     except OSError:
-                        with open("/boot.py", "r") as f:
-                            filtered_lines = []
-                            for line in f:
-                                if (
-                                    line.replace(" ", "").replace("'", '"')
-                                ).strip() != 'storage.remount("/",False)':
-                                    filtered_lines.append(line)
-
-                        with open("/boot.py", "w") as f:
-                            for line in filtered_lines:
-                                f.write(line)
+                        pass
 
                     microcontroller.reset()
 
