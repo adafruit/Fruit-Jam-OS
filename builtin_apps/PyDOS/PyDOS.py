@@ -120,11 +120,11 @@ def PyDOS():
                 if input("Are you sure? (Y/N): ").upper() == "Y":
                     if not runtime.usb_connected:
                         try:
-                            storage.remount('/',False)
+                            storage.remount("/", False)
                             readonly = storage.getmount("/").readonly
                         except RuntimeError as err:
-                            print(f'{err}')
-                            print('Try power cycling or resetting the microcontroller')
+                            print(f"{err}")
+                            print("Try power cycling or resetting the microcontroller")
                         continue
 
                     try:
@@ -1251,7 +1251,8 @@ def PyDOS():
                                                 "/",
                                                 (
                                                     "\\"
-                                                    if envVars.get("DIRSEP", "/") == "\\"
+                                                    if envVars.get("DIRSEP", "/")
+                                                    == "\\"
                                                     else "/"
                                                 ),
                                             ),
@@ -1649,11 +1650,11 @@ def PyDOS():
 
                 if not runtime.usb_connected:
                     try:
-                        storage.remount('/',True)
+                        storage.remount("/", True)
                         readonly = storage.getmount("/").readonly
                     except RuntimeError as err:
-                        print(f'{err}')
-                        print('Try power cycling or resetting the microcontroller')
+                        print(f"{err}")
+                        print("Try power cycling or resetting the microcontroller")
                     continue
 
                 if (
