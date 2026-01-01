@@ -1640,8 +1640,8 @@ def PyDOS():
                                 filtered_lines.append(line)
                             else:
                                 rewrite = True
-                except OSError:
-                    pass
+                except OSError as err:
+                    print("Warning: reading /boot.py: {err}")
 
                 if rewrite:
                     with open("/boot.py", "w") as f:
