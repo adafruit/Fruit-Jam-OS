@@ -73,6 +73,5 @@ class BouncingLogoScreenSaver(Group):
                 self.change_color()
 
             return True
-        else:
-            print("waiting")
+
         return False
