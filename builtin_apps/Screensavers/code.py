@@ -216,6 +216,7 @@ def save() -> None:
     if (screensaver_module := screensaver_modules[screensaver_index]) != launcher_config.screensaver_module:
         print("Saving launcher config to /saves/launcher.config.json")
         launcher_config.screensaver_module = screensaver_module
+        launcher_config.screensaver_class = ""
         launcher_config.save()
         save_icon_label.color = launcher_config.palette_fg
         display.refresh()
