@@ -27,9 +27,18 @@ class LauncherConfig:
     @property
     def use_mouse(self) -> bool:
         return "use_mouse" not in self._data or self._data["use_mouse"]
+    
     @use_mouse.setter
     def use_mouse(self, value: bool) -> None:
         self._data["use_mouse"] = value
+
+    @property
+    def use_gamepad(self) -> bool:
+        return "use_gamepad" not in self._data or self._data["use_gamepad"]
+    
+    @use_gamepad.setter
+    def use_gamepad(self, value: bool) -> None:
+        self._data["use_gamepad"] = value
 
     @property
     def favorites(self) -> list:
