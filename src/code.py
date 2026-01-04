@@ -69,7 +69,7 @@ display = supervisor.runtime.display
 
 launcher_config = LauncherConfig()
 
-SCREENSAVER_TIMEOUT = launcher_config.data.get("screensaver.timeout", 30)  # seconds
+SCREENSAVER_TIMEOUT = launcher_config.screensaver_timeout  # seconds
 last_interaction_time = time.monotonic()
 screensaver = None
 previous_mouse_location = [0, 0]
@@ -517,26 +517,19 @@ while True:
             if left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
                 page_left()
 
-    if "screensaver" in launcher_config.data:
+    if launcher_config.screensaver_module:
         if last_interaction_time + SCREENSAVER_TIMEOUT < now:
             if display.auto_refresh:
                 display.auto_refresh = False
 
             # show the screensaver
             if screensaver is None:
-                m = __import__(launcher_config.data["screensaver"]["module"])
-                if "class" in launcher_config.data["screensaver"]:
-                    cls = getattr(m, launcher_config.data["screensaver"]["class"])
-                else:
-                    for member in reversed(dir(m)):
-                        if member.endswith("ScreenSaver"):
-                            cls = getattr(m, member)
-                if cls is None:
+                screensaver = launcher_config.get_screensaver()
+                if screensaver is None:
                     raise ValueError("ScreenSaver class not found")
-                screensaver = cls()
 
             if hasattr(screensaver, "display_size"):
-                request_display_config(screensaver.display_size[0], screensaver.display_size[1])
+                request_display_config(*screensaver.display_size)
                 display = supervisor.runtime.display
                 if display.root_group != main_group:
                     display.root_group = main_group

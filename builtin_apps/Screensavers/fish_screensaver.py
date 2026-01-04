@@ -64,12 +64,7 @@ class FishScreenSaver(Group):
 
     def init_graphics(self):
         config = LauncherConfig()
-        if "screensaver.background_color" in config.data:
-            bg_color_str = config.data["screensaver.background_color"]
-        else:
-            bg_color_str = "0x000000"
-
-        if bg_color_str != "transparent":
+        if (bg_color_str := config.screensaver_background_color) != "transparent":
             self.background_bmp = Bitmap(self.display_size[0] // 20, self.display_size[1] // 20, 1)
             self.background_palette = Palette(1)
             self.background_palette[0] = int(bg_color_str, 0)

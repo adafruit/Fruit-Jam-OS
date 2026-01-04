@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Cooper Dalrymple (@relic-se)
 # SPDX-License-Identifier: MIT
 import json
+import sys
 import adafruit_pathlib as pathlib
 
 class LauncherConfig:
@@ -12,7 +13,7 @@ class LauncherConfig:
             if pathlib.Path(launcher_config_path).exists():
                 with open(launcher_config_path, "r") as f:
                     self._data = self._data | json.load(f)
-        for key in ("palette", "audio"):
+        for key in ("palette", "audio", "screensaver"):
             if key not in self._data:
                 self._data[key] = {}
 
@@ -114,6 +115,88 @@ class LauncherConfig:
     def boot_animation(self, value: str) -> None:
         if value.endswith(".py") and pathlib.Path(value).exists():
             self._data["boot_animation"] = value
+
+    @staticmethod
+    def _valid_module(value: str, relative: bool = False) -> bool:
+        paths = []
+        if "/" in value:
+            if not relative and not value.startswith("/"):
+                return False
+            paths.append(value)
+            if not value.endswith(".py"):
+                paths.append(value + ".py")
+        else:
+            for dir in sys.path:
+                if not relative and not dir:
+                    continue
+                if dir and not dir.endswith("/"):
+                    dir += "/"
+                paths.append(dir + value)
+        for path in paths:
+            if pathlib.Path(path).exists():
+                return True
+        return False
+
+    @property
+    def screensaver_module(self) -> str:
+        return str(self._data["screensaver"].get("module", ""))
+    
+    @screensaver_module.setter
+    def screensaver_module(self, value: str) -> None:
+        if self._valid_module(value):
+            self._data["screensaver"]["module"] = value
+
+    @property
+    def screensaver_class(self) -> str:
+        return str(self._data["screensaver"].get("class", ""))
+    
+    @screensaver_class.setter
+    def screensaver_class(self, value: str) -> None:
+        self._data["screensaver"]["class"] = value
+
+    def get_screensaver(self, module_name: str = None) -> object:
+        class_name = ""
+        if not module_name:
+            module_name = self.screensaver_module
+            class_name = self.screensaver_class
+        if not module_name:
+            return None
+            
+        try:
+            m = __import__(module_name)
+        except ImportError:
+            return None
+        
+        if class_name and hasattr(m, class_name):
+            return getattr(m, class_name)()
+        elif not class_name:
+            for member in reversed(dir(m)):
+                if member.endswith("ScreenSaver"):
+                    return getattr(m, member)()
+                
+    @property
+    def screensaver_timeout(self) -> int:
+        if "timeout" in self._data["screensaver"]:
+            return self._data["screensaver"].get("timeout", 30)
+        else:  # compatibility with previous option
+            return self._data.get("screensaver.timeout", 30)
+    
+    @screensaver_timeout.setter
+    def screensaver_timeout(self, value: int) -> None:
+        self._data["screensaver"]["timeout"] = value
+    
+    @property
+    def screensaver_background_color(self) -> str:
+        if "background_color" in self._data["screensaver"]:
+            return self._data["screensaver"].get("background_color", "0x000000")
+        else:  # compatibility with previous option
+            return self._data.get("screensaver.background_color", "0x000000")
+    
+    @screensaver_background_color.setter
+    def screensaver_background_color(self, value: str|int) -> None:
+        if isinstance(value, int):
+            value = "0x{:06x}".format(value)
+        self._data["screensaver"]["background_color"] = value
 
     def save(self) -> None:
         with open("/saves/launcher.conf.json", "w") as f:
