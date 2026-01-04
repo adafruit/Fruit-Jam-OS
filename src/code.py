@@ -555,6 +555,8 @@ while True:
         for event in gamepad.events:
             if event.pressed and event.key_number in GAMEPAD_MAP:
                 handle_key_press(GAMEPAD_MAP[event.key_number])
+            if event.pressed:
+                last_interaction_time = now
 
     if "screensaver" in launcher_config.data:
         if last_interaction_time + SCREENSAVER_TIMEOUT < now:
