@@ -41,7 +41,7 @@ class LauncherConfig:
 
     @property
     def palette_bg(self) -> int:
-        return int(self._data["palette"].get("bg", "0x222222"), 16)
+        return int(self._data["palette"].get("bg", "0x222222"), 0)
 
     @palette_bg.setter
     def palette_bg(self, value: int) -> None:
@@ -49,7 +49,7 @@ class LauncherConfig:
 
     @property
     def palette_fg(self) -> int:
-        return int(self._data["palette"].get("fg", "0xffffff"), 16)
+        return int(self._data["palette"].get("fg", "0xffffff"), 0)
 
     @palette_fg.setter
     def palette_fg(self, value: int) -> None:
@@ -57,7 +57,7 @@ class LauncherConfig:
 
     @property
     def palette_arrow(self) -> int:
-        return int(self._data["palette"].get("arrow", "0x004abe"), 16)
+        return int(self._data["palette"].get("arrow", "0x004abe"), 0)
 
     @palette_arrow.setter
     def palette_arrow(self, value: int) -> None:
@@ -65,7 +65,7 @@ class LauncherConfig:
 
     @property
     def palette_accent(self) -> int:
-        return int(self._data["palette"].get("accent", "0x008800"), 16)
+        return int(self._data["palette"].get("accent", "0x008800"), 0)
 
     @palette_accent.setter
     def palette_accent(self, value: int) -> None:
