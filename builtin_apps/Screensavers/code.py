@@ -92,7 +92,8 @@ main_group.append(bg_tg)
 screensaver_group = displayio.Group()
 main_group.append(screensaver_group)
 
-help_label = Label(terminalio.FONT, text=f"[Arrow]: Change{" [Enter]: Select" if CAN_SAVE else ""} [Escape] Exit",
+select_text = " [Enter]: Select" if CAN_SAVE else ""
+help_label = Label(terminalio.FONT, text=f"[Arrow]: Change{select_text} [Escape] Exit",
                    color=launcher_config.palette_fg)
 help_label.anchor_point = (0.0, 1.0)
 help_label.anchored_position = (2, display.height - 2)
