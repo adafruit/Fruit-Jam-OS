@@ -40,7 +40,7 @@ class RandomScreenSaver(displayio.Group):
         files = []
         try:
             files = [f for f in os.listdir(scnSaverDir) if
-                     f[-3:].upper() == ".PY" and f.upper() not in ['CODE.PY', 'RANDOM_SCREENSAVER.PY']]
+                     not f.startswith(".") and f[-3:].upper() == ".PY" and f.upper() not in ['CODE.PY', 'RANDOM_SCREENSAVER.PY']]
         except OSError:
             pass
 
