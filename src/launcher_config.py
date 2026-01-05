@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: 2025 Cooper Dalrymple (@relic-se)
 # SPDX-License-Identifier: MIT
 import json
+import storage
 import sys
+
 import adafruit_pathlib as pathlib
 
 try:
@@ -208,6 +210,15 @@ class LauncherConfig:
         if isinstance(value, int):
             value = "0x{:06x}".format(value)
         self._set_value("screensaver", "background_color", value)
+
+    @staticmethod
+    def can_save() -> bool:
+        try:
+            mount = storage.getmount("/saves")
+        except OSError:
+            return False
+        else:
+            return not mount.readonly
 
     def save(self) -> bool:
         try:

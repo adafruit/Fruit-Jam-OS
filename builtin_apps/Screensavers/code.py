@@ -126,10 +126,13 @@ scaled_group.append(right_tg)
 
 font = bitmap_font.load_font("/fonts/terminal.lvfontbin")
 
-save_icon_label = Label(font, text="💾", color=launcher_config.palette_arrow)
-save_icon_label.anchor_point = (1.0, 0.0)
-save_icon_label.anchored_position = (display.width // SCALE, 0)
-scaled_group.append(save_icon_label)
+if launcher_config.can_save():
+    save_icon_label = Label(font, text="💾", color=launcher_config.palette_arrow)
+    save_icon_label.anchor_point = (1.0, 0.0)
+    save_icon_label.anchored_position = (display.width // SCALE, 0)
+    scaled_group.append(save_icon_label)
+else:
+    save_icon_label = None
 
 mouse = None
 last_left_button_state = False
@@ -179,7 +182,8 @@ def change(index: int = None) -> None:
     title_label.text = get_screensaver_title(screensaver_module)
 
     # update icon state
-    save_icon_label.color = launcher_config.palette_fg if screensaver_module == launcher_config.screensaver_module else launcher_config.palette_arrow
+    if save_icon_label:
+        save_icon_label.color = launcher_config.palette_fg if screensaver_module == launcher_config.screensaver_module else launcher_config.palette_arrow
     
     # assign display size if necessary
     if hasattr(screensaver, "display_size"):
@@ -197,7 +201,8 @@ def change(index: int = None) -> None:
         title_label.anchored_position = (display.width // (2 * SCALE), 2)
         left_tg.anchored_position = (0, (display.height // (2 * SCALE)) - 2)
         right_tg.anchored_position = ((display.width // SCALE), (display.height // (2 * SCALE)) - 2)
-        save_icon_label.anchored_position = (display.width // SCALE, 0)
+        if save_icon_label:
+            save_icon_label.anchored_position = (display.width // SCALE, 0)
         if mouse:
             mouse.scale = SCALE
 
@@ -217,7 +222,7 @@ def save() -> None:
         print("Saving launcher config to /saves/launcher.config.json")
         launcher_config.screensaver_module = screensaver_module
         launcher_config.screensaver_class = ""
-        if launcher_config.save():
+        if launcher_config.save() and save_icon_label:
             save_icon_label.color = launcher_config.palette_fg
             display.refresh()
         else:
@@ -268,7 +273,7 @@ try:
                     next()
                 elif left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
                     previous()
-                elif label_contains(save_icon_label, (mouse_tg.x, mouse_tg.y)):
+                elif save_icon_label and label_contains(save_icon_label, (mouse_tg.x, mouse_tg.y)):
                     save()
                 elif label_contains(exit_icon_label, (mouse_tg.x, mouse_tg.y)):
                     break
