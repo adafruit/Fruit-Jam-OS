@@ -53,6 +53,7 @@ class LauncherConfig:
     def __init__(self):
         self._data = {}
         self._changes = {}
+        for directory in ("/sd/", "/", "/saves/"):
             launcher_config_path = directory + "launcher.conf.json"
             if pathlib.Path(launcher_config_path).exists():
                 with open(launcher_config_path, "r") as f:
