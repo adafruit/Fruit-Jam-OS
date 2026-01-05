@@ -209,9 +209,14 @@ class LauncherConfig:
             value = "0x{:06x}".format(value)
         self._set_value("screensaver", "background_color", value)
 
-    def save(self) -> None:
-        with open("/saves/launcher.conf.json", "w") as f:
-            json.dump(self._data, f)
+    def save(self) -> bool:
+        try:
+            with open("/saves/launcher.conf.json", "w") as f:
+                json.dump(self._data, f)
+        except (OSError, IOError):
+            return False
+        else:
+            return True
 
     def __str__(self) -> str:
         return str(self._data)
