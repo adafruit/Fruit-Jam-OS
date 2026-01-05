@@ -108,6 +108,22 @@ title_label.anchor_point = (0.5, 0.0)
 title_label.anchored_position = (display.width // (2 * SCALE), 2)
 scaled_group.append(title_label)
 
+left_bmp, left_palette = adafruit_imageload.load("/launcher_assets/arrow_left.bmp")
+left_palette.make_transparent(0)
+left_palette[2] = launcher_config.palette_arrow
+left_tg = AnchoredTileGrid(bitmap=left_bmp, pixel_shader=left_palette)
+left_tg.anchor_point = (0, 0.5)
+left_tg.anchored_position = (0, (display.height // (2 * SCALE)) - 2)
+scaled_group.append(left_tg)
+
+right_bmp, right_palette = adafruit_imageload.load("/launcher_assets/arrow_right.bmp")
+right_palette.make_transparent(0)
+right_palette[2] = launcher_config.palette_arrow
+right_tg = AnchoredTileGrid(bitmap=right_bmp, pixel_shader=right_palette)
+right_tg.anchor_point = (1.0, 0.5)
+right_tg.anchored_position = ((display.width // SCALE), (display.height // (2 * SCALE)) - 2)
+scaled_group.append(right_tg)
+
 font = bitmap_font.load_font("/fonts/terminal.lvfontbin")
 
 save_icon_label = Label(font, text="💾", color=launcher_config.palette_arrow)
@@ -127,22 +143,6 @@ if launcher_config.use_mouse:
         exit_icon_label.anchor_point = (0.0, 0.0)
         exit_icon_label.anchored_position = (0, 0)
         scaled_group.append(exit_icon_label)
-
-        left_bmp, left_palette = adafruit_imageload.load("/launcher_assets/arrow_left.bmp")
-        left_palette.make_transparent(0)
-        right_bmp, right_palette = adafruit_imageload.load("/launcher_assets/arrow_right.bmp")
-        right_palette.make_transparent(0)
-        left_palette[2] = right_palette[2] = launcher_config.palette_arrow
-
-        left_tg = AnchoredTileGrid(bitmap=left_bmp, pixel_shader=left_palette)
-        left_tg.anchor_point = (0, 0.5)
-        left_tg.anchored_position = (0, (display.height // (2 * SCALE)) - 2)
-        scaled_group.append(left_tg)
-
-        right_tg = AnchoredTileGrid(bitmap=right_bmp, pixel_shader=right_palette)
-        right_tg.anchor_point = (1.0, 0.5)
-        right_tg.anchored_position = ((display.width // SCALE), (display.height // (2 * SCALE)) - 2)
-        scaled_group.append(right_tg)
 
         mouse_tg = mouse.tilegrid
         mouse_tg.x = display.width // (2 * SCALE)
@@ -195,11 +195,11 @@ def change(index: int = None) -> None:
         # reset positions
         help_label.anchored_position = (2, display.height - 2)
         title_label.anchored_position = (display.width // (2 * SCALE), 2)
+        left_tg.anchored_position = (0, (display.height // (2 * SCALE)) - 2)
+        right_tg.anchored_position = ((display.width // SCALE), (display.height // (2 * SCALE)) - 2)
         save_icon_label.anchored_position = (display.width // SCALE, 0)
         if mouse:
             mouse.scale = SCALE
-            left_tg.anchored_position = (0, (display.height // (2 * SCALE)) - 2)
-            right_tg.anchored_position = ((display.width // SCALE), (display.height // (2 * SCALE)) - 2)
 
     # display screensaver
     if screensaver not in screensaver_group:
