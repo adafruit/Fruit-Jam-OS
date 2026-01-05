@@ -20,6 +20,7 @@ from adafruit_usb_host_mouse import find_and_init_boot_mouse
 from launcher_config import LauncherConfig
 
 launcher_config = LauncherConfig()
+CAN_SAVE = launcher_config.can_save()
 
 def get_screensaver_modules() -> list:
     screensavers = []
@@ -91,7 +92,7 @@ main_group.append(bg_tg)
 screensaver_group = displayio.Group()
 main_group.append(screensaver_group)
 
-help_label = Label(terminalio.FONT, text="[Arrow]: Change [Enter]: Select [Escape] Exit",
+help_label = Label(terminalio.FONT, text=f"[Arrow]: Change{" [Enter]: Select" if CAN_SAVE else ""} [Escape] Exit",
                    color=launcher_config.palette_fg)
 help_label.anchor_point = (0.0, 1.0)
 help_label.anchored_position = (2, display.height - 2)
@@ -126,7 +127,7 @@ scaled_group.append(right_tg)
 
 font = bitmap_font.load_font("/fonts/terminal.lvfontbin")
 
-if launcher_config.can_save():
+if CAN_SAVE:
     save_icon_label = Label(font, text="💾", color=launcher_config.palette_arrow)
     save_icon_label.anchor_point = (1.0, 0.0)
     save_icon_label.anchored_position = (display.width // SCALE, 0)
@@ -218,7 +219,7 @@ def previous() -> None:
     change(screensaver_index - 1)
 
 def save() -> None:
-    if (screensaver_module := screensaver_modules[screensaver_index]) != launcher_config.screensaver_module:
+    if CAN_SAVE and (screensaver_module := screensaver_modules[screensaver_index]) != launcher_config.screensaver_module:
         print("Saving launcher config to /saves/launcher.config.json")
         launcher_config.screensaver_module = screensaver_module
         launcher_config.screensaver_class = ""
@@ -236,7 +237,7 @@ def handle_key_press(key):
         previous()
     elif key in ("\x1b[B", "\x1b[C"):  # down or right
         next()
-    elif key in "\n":  # enter
+    elif CAN_SAVE and key in "\n":  # enter
         save()
     elif key == "\x1b":  # escape
         raise KeyboardInterrupt()
