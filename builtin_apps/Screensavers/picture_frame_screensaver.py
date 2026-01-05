@@ -6,6 +6,8 @@ import displayio
 import adafruit_ticks
 import adafruit_imageload
 import bitmaptools
+from terminalio import FONT
+from adafruit_display_text import label
 from launcher_config import LauncherConfig
 
 
@@ -90,7 +92,23 @@ class PictFrameScreenSaver(displayio.Group):
 
             if len(self.files) != 0:
                 break
-        print(f'Picture Directory: {self.pictDir}')
+
+        self._msg = f'Picture Directory: {self.pictDir}'
+        self._no_images = None
+        if len(self.files) == 0:
+            self._msg = f'No images found in: {_pictDir}'
+            self._background_bmp = displayio.Bitmap(
+                self.display_size[0] // 20, self.display_size[1] // 20, 1
+            )
+            self._background_palette = displayio.Palette(1)
+            self._background_palette[0] = 0
+            self._background_tg = displayio.TileGrid(
+                bitmap=self._background_bmp, pixel_shader=self._background_palette
+            )
+            self._background_group = displayio.Group(scale=20)
+            self._background_group.append(self._background_tg)
+
+        print(f"\n\n{self._msg}\n\n")
 
         self.shuffle_indx = [i for i in range(len(self.files))]
         self.fileindx = -1
@@ -108,7 +126,22 @@ class PictFrameScreenSaver(displayio.Group):
         if adafruit_ticks.ticks_less(self.stop, adafruit_ticks.ticks_ms()):
             self.stop = adafruit_ticks.ticks_add(adafruit_ticks.ticks_ms(), int(self.dispseconds * 1000))
             if len(self.files) == 0:
-                print(f"\n\n\nNo images found in the root folder or on the SD card (/sd).\n\n\n\n")
+                if self._no_images is None:
+                    self._no_images = label.Label(
+                        FONT, text=self._msg.split('[')[0], color=0xFFFFFF
+                    )
+                    self._no_images.x = 10
+                    self._no_images.y = 50
+                    _no_images_2 = label.Label(
+                        FONT, text='['+self._msg.split('[')[1], color=0xFFFFFF
+                    )
+                    _no_images_2.x = 10
+                    _no_images_2.y = 65
+                    self.append(self._background_group)
+                    self.append(self._no_images)
+                    self.append(_no_images_2)
+                    return True
+
                 return False
 
             if self.shuffle:

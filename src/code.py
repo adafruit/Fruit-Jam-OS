@@ -107,6 +107,29 @@ if launcher_config.use_mouse:
         mouse_tg.x = display.width // (2 * scale)
         mouse_tg.y = display.height // (2 * scale)
 
+gamepad = None
+if launcher_config.use_gamepad:
+    try:
+        import relic_usb_host_gamepad
+    except ImportError:
+        pass
+    else:
+        gamepad = relic_usb_host_gamepad.Gamepad()
+        GAMEPAD_MAP = {
+            relic_usb_host_gamepad.BUTTON_UP: "\x1b[A",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_UP: "\x1b[A",
+            relic_usb_host_gamepad.BUTTON_DOWN: "\x1b[B",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_DOWN: "\x1b[B",
+            relic_usb_host_gamepad.BUTTON_LEFT: "\x1b[D",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_LEFT: "\x1b[D",
+            relic_usb_host_gamepad.BUTTON_RIGHT: "\x1b[C",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_RIGHT: "\x1b[C",
+            relic_usb_host_gamepad.BUTTON_A: "\n",
+            relic_usb_host_gamepad.BUTTON_START: "\n",
+            relic_usb_host_gamepad.BUTTON_L1: "\x1b[5~",  # PGUP
+            relic_usb_host_gamepad.BUTTON_R1: "\x1b[6~",  # PGDN
+        }
+
 config = {
     "menu_title": "Launcher Menu",
     "width": 3,
@@ -442,6 +465,7 @@ def handle_key_press(key):
             page_left()
         elif selected is right_tg:
             page_right()
+
     elif key == "e":
         if isinstance(selected, tuple):
             editor_index = (selected[1] * config["width"] + selected[0]) + (cur_page * page_size)
@@ -449,6 +473,7 @@ def handle_key_press(key):
                 editor_index = None
 
             print("go!")
+
     elif key in "123456789":
         if key != "9":
             requested_page = int(key)
@@ -460,6 +485,15 @@ def handle_key_press(key):
             max_page = math.ceil(len(apps) / page_size)
             cur_page = max_page - 1
             display_page(max_page - 1)
+
+    # page up key
+    elif key == "\x1b[5~":
+        page_left()
+
+    # page down key
+    elif key == "\x1b[6~":
+        page_right()
+
     else:
         print(f"unhandled key: {repr(key)}")
 
@@ -516,6 +550,13 @@ while True:
                 page_right()
             if left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
                 page_left()
+
+    if gamepad and gamepad.update():
+        for event in gamepad.events:
+            if event.pressed and event.key_number in GAMEPAD_MAP:
+                handle_key_press(GAMEPAD_MAP[event.key_number])
+            if event.pressed:
+                last_interaction_time = now
 
     if launcher_config.screensaver_module:
         if last_interaction_time + SCREENSAVER_TIMEOUT < now:
