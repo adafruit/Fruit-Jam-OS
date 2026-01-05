@@ -8,8 +8,34 @@ import adafruit_pathlib as pathlib
 
 try:
     from typing import Any
+    from io import FileIO
 except ImportError:
     pass
+
+def _json_dump_pretty(data: dict|list|tuple, stream: FileIO, indent: int = 0, indent_size: int = 4) -> None:
+    stream.write(("{" if isinstance(data, dict) else "[") + "\n")
+
+    first_item = True
+    for key, value in (data.items() if isinstance(data, dict) else enumerate(data)):
+        if not first_item:
+            stream.write(",\n")
+        else:
+            first_item = False
+
+        stream.write(" " * ((indent + 1) * indent_size))
+        if isinstance(data, dict):
+            stream.write(f"\"{key}\": ")
+
+        if isinstance(value, (dict, list, tuple)):
+            _json_dump_pretty(value, stream, indent + 1, indent_size)
+        elif isinstance(value, bool):
+            stream.write("true" if value else "false")
+        elif isinstance(value, int):
+            stream.write(str(value))
+        else:
+            stream.write(f"\"{value}\"")
+
+    stream.write("\n" + (" " * (indent * indent_size)) + ("}" if isinstance(data, dict) else "]"))
 
 class LauncherConfig:
 
@@ -223,7 +249,7 @@ class LauncherConfig:
     def save(self) -> bool:
         try:
             with open("/saves/launcher.conf.json", "w") as f:
-                json.dump(self._data, f)
+                _json_dump_pretty(self._data, f)
         except (OSError, IOError):
             return False
         else:
