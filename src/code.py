@@ -71,7 +71,7 @@ display = supervisor.runtime.display
 
 launcher_config = LauncherConfig()
 
-SCREENSAVER_TIMEOUT = launcher_config.data.get("screensaver.timeout", 30)  # seconds
+SCREENSAVER_TIMEOUT = launcher_config.screensaver_timeout  # seconds
 last_interaction_time = time.monotonic()
 screensaver = None
 previous_mouse_location = [0, 0]
@@ -108,6 +108,29 @@ if launcher_config.use_mouse:
         mouse_tg = mouse.tilegrid
         mouse_tg.x = display.width // (2 * scale)
         mouse_tg.y = display.height // (2 * scale)
+
+gamepad = None
+if launcher_config.use_gamepad:
+    try:
+        import relic_usb_host_gamepad
+    except ImportError:
+        pass
+    else:
+        gamepad = relic_usb_host_gamepad.Gamepad()
+        GAMEPAD_MAP = {
+            relic_usb_host_gamepad.BUTTON_UP: "\x1b[A",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_UP: "\x1b[A",
+            relic_usb_host_gamepad.BUTTON_DOWN: "\x1b[B",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_DOWN: "\x1b[B",
+            relic_usb_host_gamepad.BUTTON_LEFT: "\x1b[D",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_LEFT: "\x1b[D",
+            relic_usb_host_gamepad.BUTTON_RIGHT: "\x1b[C",
+            relic_usb_host_gamepad.BUTTON_JOYSTICK_RIGHT: "\x1b[C",
+            relic_usb_host_gamepad.BUTTON_A: "\n",
+            relic_usb_host_gamepad.BUTTON_START: "\n",
+            relic_usb_host_gamepad.BUTTON_L1: "\x1b[5~",  # PGUP
+            relic_usb_host_gamepad.BUTTON_R1: "\x1b[6~",  # PGDN
+        }
 
 config = {
     "menu_title": "Launcher Menu",
@@ -454,6 +477,7 @@ def handle_key_press(key):
             page_left()
         elif selected is right_tg:
             page_right()
+
     elif key == "e":
         if isinstance(selected, tuple):
             editor_index = (selected[1] * config["width"] + selected[0]) + (cur_page * page_size)
@@ -461,6 +485,7 @@ def handle_key_press(key):
                 editor_index = None
 
             print("go!")
+
     elif key in "123456789":
         if key != "9":
             requested_page = int(key)
@@ -472,6 +497,15 @@ def handle_key_press(key):
             max_page = math.ceil(len(apps) / page_size)
             cur_page = max_page - 1
             display_page(max_page - 1)
+
+    # page up key
+    elif key == "\x1b[5~":
+        page_left()
+
+    # page down key
+    elif key == "\x1b[6~":
+        page_right()
+
     else:
         print(f"unhandled key: {repr(key)}")
 
@@ -530,31 +564,33 @@ while True:
             if left_tg.contains((mouse_tg.x, mouse_tg.y, 0)):
                 page_left()
 
-    if "screensaver" in launcher_config.data:
+    if gamepad and gamepad.update():
+        for event in gamepad.events:
+            if event.pressed and event.key_number in GAMEPAD_MAP:
+                handle_key_press(GAMEPAD_MAP[event.key_number])
+            if event.pressed:
+                last_interaction_time = now
+
+    if launcher_config.screensaver_module:
         if last_interaction_time + SCREENSAVER_TIMEOUT < now:
             if display.auto_refresh:
                 display.auto_refresh = False
 
             # show the screensaver
             if screensaver is None:
-                m = __import__(launcher_config.data["screensaver"]["module"])
-                if "class" in launcher_config.data["screensaver"]:
-                    cls = getattr(m, launcher_config.data["screensaver"]["class"])
-                else:
-                    for member in reversed(dir(m)):
-                        if member.endswith("ScreenSaver"):
-                            cls = getattr(m, member)
-                if cls is None:
+                screensaver = launcher_config.get_screensaver()
+                if screensaver is None:
                     raise ValueError("ScreenSaver class not found")
-                screensaver = cls()
 
-            request_display_config(screensaver.display_size[0], screensaver.display_size[1])
-            display = supervisor.runtime.display
-            if display.root_group != main_group:
-                display.root_group = main_group
+            if hasattr(screensaver, "display_size"):
+                request_display_config(*screensaver.display_size)
+                display = supervisor.runtime.display
+                if display.root_group != main_group:
+                    display.root_group = main_group
 
             if screensaver not in main_group:
                 main_group.append(screensaver)
+                display.refresh()
 
             needs_refresh = screensaver.tick()
             if needs_refresh:
@@ -563,8 +599,11 @@ while True:
         else:
             if not display.auto_refresh:
                 display.auto_refresh = True
+
             if screensaver in main_group:
                 main_group.remove(screensaver)
+
+            if hasattr(screensaver, "display_size"):
                 request_display_config(*display_size)
                 display = supervisor.runtime.display
                 if display.root_group != main_group:
