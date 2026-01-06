@@ -1,16 +1,17 @@
 # SPDX-FileCopyrightText: 2025 Cooper Dalrymple (@relic-se)
 # SPDX-License-Identifier: MIT
 import json
-import storage
 import sys
 
 import adafruit_pathlib as pathlib
+import storage
 
 try:
-    from typing import Any
     from io import FileIO
+    from typing import Any
 except ImportError:
     pass
+
 
 def _merge(data: dict, changes: dict) -> dict:
     if data is None:
@@ -23,11 +24,14 @@ def _merge(data: dict, changes: dict) -> dict:
                 data[key] = value
     return data
 
-def _json_dump_pretty(data: dict|list|tuple, stream: FileIO, indent: int = 0, indent_size: int = 4) -> None:
+
+def _json_dump_pretty(
+    data: dict | list | tuple, stream: FileIO, indent: int = 0, indent_size: int = 4
+) -> None:
     stream.write(("{" if isinstance(data, dict) else "[") + "\n")
 
     first_item = True
-    for key, value in (data.items() if isinstance(data, dict) else enumerate(data)):
+    for key, value in data.items() if isinstance(data, dict) else enumerate(data):
         if not first_item:
             stream.write(",\n")
         else:
@@ -35,7 +39,7 @@ def _json_dump_pretty(data: dict|list|tuple, stream: FileIO, indent: int = 0, in
 
         stream.write(" " * ((indent + 1) * indent_size))
         if isinstance(data, dict):
-            stream.write(f"\"{key}\": ")
+            stream.write(f'"{key}": ')
 
         if isinstance(value, (dict, list, tuple)):
             _json_dump_pretty(value, stream, indent + 1, indent_size)
@@ -44,19 +48,19 @@ def _json_dump_pretty(data: dict|list|tuple, stream: FileIO, indent: int = 0, in
         elif isinstance(value, int):
             stream.write(str(value))
         else:
-            stream.write(f"\"{value}\"")
+            stream.write(f'"{value}"')
 
     stream.write("\n" + (" " * (indent * indent_size)) + ("}" if isinstance(data, dict) else "]"))
 
-class LauncherConfig:
 
+class LauncherConfig:
     def __init__(self):
         self._data = {}
         self._changes = {}
         for directory in ("/sd/", "/", "/saves/"):
             launcher_config_path = directory + "launcher.conf.json"
             if pathlib.Path(launcher_config_path).exists():
-                with open(launcher_config_path, "r") as f:
+                with open(launcher_config_path) as f:
                     try:
                         data = json.load(f)
                     except (AttributeError, ValueError):
@@ -91,7 +95,7 @@ class LauncherConfig:
     @property
     def use_mouse(self) -> bool:
         return bool(self._data.get("use_mouse", True))
-    
+
     @use_mouse.setter
     def use_mouse(self, value: bool) -> None:
         self._set_value("use_mouse", value)
@@ -99,7 +103,7 @@ class LauncherConfig:
     @property
     def use_gamepad(self) -> bool:
         return "use_gamepad" not in self._data or self._data["use_gamepad"]
-    
+
     @use_gamepad.setter
     def use_gamepad(self, value: bool) -> None:
         self._data["use_gamepad"] = value
@@ -118,7 +122,7 @@ class LauncherConfig:
 
     @palette_bg.setter
     def palette_bg(self, value: int) -> None:
-        self._set_group_value("palette", "bg", "0x{:06x}".format(value))
+        self._set_group_value("palette", "bg", f"0x{value:06x}")
 
     @property
     def palette_fg(self) -> int:
@@ -126,7 +130,7 @@ class LauncherConfig:
 
     @palette_fg.setter
     def palette_fg(self, value: int) -> None:
-        self._set_group_value("palette", "fg", "0x{:06x}".format(value))
+        self._set_group_value("palette", "fg", f"0x{value:06x}")
 
     @property
     def palette_arrow(self) -> int:
@@ -134,7 +138,7 @@ class LauncherConfig:
 
     @palette_arrow.setter
     def palette_arrow(self, value: int) -> None:
-        self._set_group_value("palette", "arrow", "0x{:06x}".format(value))
+        self._set_group_value("palette", "arrow", f"0x{value:06x}")
 
     @property
     def palette_accent(self) -> int:
@@ -142,7 +146,7 @@ class LauncherConfig:
 
     @palette_accent.setter
     def palette_accent(self, value: int) -> None:
-        self._set_group_value("palette", "accent", "0x{:06x}".format(value))
+        self._set_group_value("palette", "accent", f"0x{value:06x}")
 
     @property
     def audio_output(self) -> str:
@@ -170,7 +174,9 @@ class LauncherConfig:
 
     @property
     def audio_volume_override_danger(self) -> float:
-        return min(max(float(self._get_group_value("audio", "volume_override_danger", 0.75)), 0.0), 1.0)
+        return min(
+            max(float(self._get_group_value("audio", "volume_override_danger", 0.75)), 0.0), 1.0
+        )
 
     @audio_volume_override_danger.setter
     def audio_volume_override_danger(self, value: float) -> None:
@@ -202,7 +208,7 @@ class LauncherConfig:
                 if not relative and not dir:
                     continue
                 if dir and not dir.endswith("/"):
-                    dir += "/"
+                    dir += "/"  # noqa: PLW2901, loop var overwritten
                 paths.append(dir + value)
         for path in paths:
             if pathlib.Path(path).exists():
@@ -212,7 +218,7 @@ class LauncherConfig:
     @property
     def screensaver_module(self) -> str:
         return str(self._get_group_value("screensaver", "module", ""))
-    
+
     @screensaver_module.setter
     def screensaver_module(self, value: str) -> None:
         if self._valid_module(value):
@@ -221,7 +227,7 @@ class LauncherConfig:
     @property
     def screensaver_class(self) -> str:
         return str(self._get_group_value("screensaver", "class", ""))
-    
+
     @screensaver_class.setter
     def screensaver_class(self, value: str) -> None:
         self._set_group_value("screensaver", "class", value)
@@ -233,41 +239,43 @@ class LauncherConfig:
             class_name = self.screensaver_class
         if not module_name:
             return None
-            
+
         try:
             m = __import__(module_name)
         except ImportError:
             return None
-        
+
         if class_name and hasattr(m, class_name):
             return getattr(m, class_name)()
         elif not class_name:
             for member in reversed(dir(m)):
                 if member.endswith("ScreenSaver"):
                     return getattr(m, member)()
-                
+
     @property
     def screensaver_timeout(self) -> int:
         value = self._get_group_value("screensaver", "timeout")
         if value is None:
             value = self._data.get("screensaver.timeout")  # compatibility with previous option
         return int(value) if value is not None else 30
-    
+
     @screensaver_timeout.setter
     def screensaver_timeout(self, value: int) -> None:
         self._set_group_value("screensaver", "timeout", max(value, 1))
-    
+
     @property
     def screensaver_background_color(self) -> str:
         value = self._get_group_value("screensaver", "background_color")
         if value is None:
-            value = self._data.get("screensaver.background_color")  # compatibility with previous option
+            value = self._data.get(
+                "screensaver.background_color"
+            )  # compatibility with previous option
         return str(value) if value is not None else "0x000000"
-    
+
     @screensaver_background_color.setter
-    def screensaver_background_color(self, value: str|int) -> None:
+    def screensaver_background_color(self, value: str | int) -> None:
         if isinstance(value, int):
-            value = "0x{:06x}".format(value)
+            value = f"0x{value:06x}"
         self._set_group_value("screensaver", "background_color", value)
 
     @staticmethod
@@ -282,16 +290,16 @@ class LauncherConfig:
     def save(self) -> bool:
         if not self._changes:
             return False
-        
+
         # read existing config
         data = None
         if pathlib.Path("/saves/launcher.conf.json").exists():
             try:
-                with open("/saves/launcher.conf.json", "r") as f:
+                with open("/saves/launcher.conf.json") as f:
                     data = json.load(f)
-            except (AttributeError, ValueError, OSError, IOError):
+            except (AttributeError, ValueError, OSError):
                 pass
-        
+
         # merge with changes
         data = _merge(data, self._changes)
 
@@ -299,7 +307,7 @@ class LauncherConfig:
         try:
             with open("/saves/launcher.conf.json", "w") as f:
                 _json_dump_pretty(data, f)
-        except (OSError, IOError):
+        except OSError:
             return False
         else:
             return True

@@ -101,6 +101,8 @@ ignore = [
     "PLR0915", # Too many nested blocks
     "PLR0912", # Too many branches
     "PLW0603", # Using global statement
+    "PLR0904", # Too many public methods
+
 ]
 
 [format]
