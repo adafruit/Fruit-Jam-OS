@@ -34,7 +34,7 @@ def get_screensaver_modules() -> list:
             for name in os.listdir(dir):
                 if not name.startswith("."):
                     screensavers.append(dir + (name[:-len(".py")] if name.endswith(".py") else name))
-    
+
     return screensavers
 
 def get_screensaver_title(module_name: str) -> str:
@@ -48,7 +48,7 @@ def get_screensaver_title(module_name: str) -> str:
         title = title[len("Fruit_Jam_Screensaver_"):]
     elif title.startswith("Fruit_Jam_"):
         title = title[len("Fruit_Jam_"):]
-    
+
     # add spaces
     title = title.replace("_", " ")
 
@@ -167,7 +167,7 @@ def change(index: int = None) -> None:
     if screensaver is not None:
         screensaver_group.remove(screensaver)
         del screensaver
-    
+
     # update index
     if index is not None:
         screensaver_index = index % len(screensaver_modules)
@@ -179,21 +179,21 @@ def change(index: int = None) -> None:
     screensaver = launcher_config.get_screensaver(screensaver_module)
     if screensaver is None:
         raise ValueError(f"ScreenSaver class not found in {screensaver_module}")
-    
+
     # update title label
     title_label.text = get_screensaver_title(screensaver_module)
 
     # update icon state
     if save_icon_label:
         save_icon_label.color = launcher_config.palette_fg if screensaver_module == launcher_config.screensaver_module else launcher_config.palette_arrow
-    
+
     # assign display size if necessary
     if hasattr(screensaver, "display_size"):
         request_display_config(*screensaver.display_size)
         display = supervisor.runtime.display
         if display.root_group != main_group:
             display.root_group = main_group
-        
+
         # update scale
         SCALE = int(display.width > 360) + 1
         scaled_group.scale = SCALE
@@ -248,7 +248,7 @@ def label_contains(label: Label, mouse_pos: tuple[int, int]) -> bool:
     label_x += label.x
     label_y += label.y
     return 0 <= mouse_pos[0] - label_x <= label_width and 0 <= mouse_pos[1] - label_y <= label_height
-    
+
 # flush keyboard input
 while supervisor.runtime.serial_bytes_available:
     sys.stdin.read()
@@ -280,7 +280,7 @@ try:
                 elif label_contains(exit_icon_label, (mouse_tg.x, mouse_tg.y)):
                     break
             last_left_button_state = current_left_button_state
-        
+
         if needs_refresh:
             display.refresh()
 

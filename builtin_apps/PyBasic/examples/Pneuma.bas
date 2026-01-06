@@ -1,20 +1,20 @@
-10 REM Pneuma - A space adventure 
-20 REM ========== backstory and instructions ========== 
+10 REM Pneuma - A space adventure
+20 REM ========== backstory and instructions ==========
 30 PRINT "********************************" : PRINT
 35 PRINT "   Pneuma - A space adventure" : PRINT
-40 PRINT "********************************": PRINT 
-45 PRINT "To get instructions, type 'help'" 
-50 PRINT 
-60 PRINT "You wake up in your bunk, in the sleeping quarters of the starship Pneuma. You can't" 
-65 PRINT "remember much. You went to bed feeling sick and after a feverish few hours tossing and" 
-70 PRINT "turning, feeling like you were burning up, you eventually fell asleep." : PRINT 
-75 PRINT "Now, your sheets and night clothes are damp with sweat, and you have a raging thirst." 
-80 PRINT "You have a sore throat and the mother of all headaches, like your brain has been boiling" 
-85 PRINT "in your skull. In fact, you're no longer sure exactly where you are ... you seem to be" 
-90 PRINT "suffering from some sort of amnesia ...": PRINT 
+40 PRINT "********************************": PRINT
+45 PRINT "To get instructions, type 'help'"
+50 PRINT
+60 PRINT "You wake up in your bunk, in the sleeping quarters of the starship Pneuma. You can't"
+65 PRINT "remember much. You went to bed feeling sick and after a feverish few hours tossing and"
+70 PRINT "turning, feeling like you were burning up, you eventually fell asleep." : PRINT
+75 PRINT "Now, your sheets and night clothes are damp with sweat, and you have a raging thirst."
+80 PRINT "You have a sore throat and the mother of all headaches, like your brain has been boiling"
+85 PRINT "in your skull. In fact, you're no longer sure exactly where you are ... you seem to be"
+90 PRINT "suffering from some sort of amnesia ...": PRINT
 95 REM set up environment
 100 GOSUB 2700
-500 REM setup room descriptions 
+500 REM setup room descriptions
 510 GOSUB 3000
 520 REM setup up interative descriptions
 530 GOSUB 5000
@@ -22,51 +22,51 @@
 550 GOSUB 7000
 700 REM ========== main loop ==========
 701 IF WPL <> 99 THEN GOSUB 8400 : REM wraith-hound movement
-702 REM show room details 
-703 PRINT "You are in the " ; LO$ ( PL ) : PRINT 
+702 REM show room details
+703 PRINT "You are in the " ; LO$ ( PL ) : PRINT
 705 GOSUB 4010 : REM print room description
 706 GOSUB 8000 : REM tracker info if carried
 707 IF WPL <> 99 THEN GOSUB 8200 : REM wraith-hound proximity check
-709 IF WPL = PL THEN GOSUB 11000 : REM fight wraith-hound 
-710 INPUT "What now? " ; I$ 
-715 PRINT 
-716 MOVE = 1 
-720 IF LEFT$ ( LOWER$ ( I$ ) , 4 ) = "get " THEN MOVE = 0 : GOSUB 1400 
-730 IF LEFT$ ( LOWER$ ( I$ ) , 5 ) = "take " THEN MOVE = 0 : GOSUB 1700 
-740 IF LEFT$ ( LOWER$ ( I$ ) , 5 ) = "drop " THEN MOVE = 0 : GOSUB 2000 
-750 IF LEFT$ ( LOWER$ ( I$ ) , 8 ) = "examine " THEN MOVE = 0 : GOSUB 2300 
-760 IF LEFT$ ( LOWER$ ( I$ ) , 4 ) = "look" THEN MOVE = 0 : GOSUB 4010 
+709 IF WPL = PL THEN GOSUB 11000 : REM fight wraith-hound
+710 INPUT "What now? " ; I$
+715 PRINT
+716 MOVE = 1
+720 IF LEFT$ ( LOWER$ ( I$ ) , 4 ) = "get " THEN MOVE = 0 : GOSUB 1400
+730 IF LEFT$ ( LOWER$ ( I$ ) , 5 ) = "take " THEN MOVE = 0 : GOSUB 1700
+740 IF LEFT$ ( LOWER$ ( I$ ) , 5 ) = "drop " THEN MOVE = 0 : GOSUB 2000
+750 IF LEFT$ ( LOWER$ ( I$ ) , 8 ) = "examine " THEN MOVE = 0 : GOSUB 2300
+760 IF LEFT$ ( LOWER$ ( I$ ) , 4 ) = "look" THEN MOVE = 0 : GOSUB 4010
 765 IF LEFT$ ( LOWER$ ( I$ ) , 4 ) = "help" THEN MOVE = 0 : GOSUB 4130
 767 IF LEFT$ ( LOWER$ ( I$ ) , 4 ) = "use " THEN MOVE = 0 : GOSUB 9000
-770 IF LOWER$ ( I$ ) = "i" OR LOWER$ ( I$ ) = "inventory" THEN MOVE = 0 : GOSUB 1000 
+770 IF LOWER$ ( I$ ) = "i" OR LOWER$ ( I$ ) = "inventory" THEN MOVE = 0 : GOSUB 1000
 775 IF LEFT$ ( LOWER$ ( I$ ) , 8 ) = "talk to " THEN MOVE = 0 : GOSUB 2630
-780 IF LEFT$ ( LOWER$ ( I$ ) , 1 ) = "q" THEN GOSUB 2600 
-785 IF LEFT$ ( LOWER$ ( I$ ) , 3 ) = "go " THEN GOSUB 1100 
-790 IF LOWER$ ( I$ ) = "f" OR LOWER$ ( I$ ) = "forward" THEN GOSUB 1200 
-800 IF LOWER$ ( I$ ) = "a" OR LOWER$ ( I$ ) = "aft" THEN GOSUB 1200 
-810 IF LOWER$ ( I$ ) = "p" OR LOWER$ ( I$ ) = "port" THEN GOSUB 1200 
-820 IF LOWER$ ( I$ ) = "s" OR LOWER$ ( I$ ) = "starboard" THEN GOSUB 1200 
-830 IF LOWER$ ( I$ ) = "u" OR LOWER$ ( I$ ) = "up" THEN GOSUB 1200 
-840 IF LOWER$ ( I$ ) = "d" OR LOWER$ ( I$ ) = "down" THEN GOSUB 1200 
-895 IF MOVE = 1 THEN GOTO 700 ELSE GOTO 710 
-900 STOP 
-995 REM ========== actions ========== 
-1000 REM list the player's inventory 
-1005 PRINT "You have the following items:" : PRINT 
-1010 FOR I = 0 TO OC - 1 
-1020 IF OL ( I ) = 0 THEN PRINT OB$ ( I ) 
-1030 NEXT I 
+780 IF LEFT$ ( LOWER$ ( I$ ) , 1 ) = "q" THEN GOSUB 2600
+785 IF LEFT$ ( LOWER$ ( I$ ) , 3 ) = "go " THEN GOSUB 1100
+790 IF LOWER$ ( I$ ) = "f" OR LOWER$ ( I$ ) = "forward" THEN GOSUB 1200
+800 IF LOWER$ ( I$ ) = "a" OR LOWER$ ( I$ ) = "aft" THEN GOSUB 1200
+810 IF LOWER$ ( I$ ) = "p" OR LOWER$ ( I$ ) = "port" THEN GOSUB 1200
+820 IF LOWER$ ( I$ ) = "s" OR LOWER$ ( I$ ) = "starboard" THEN GOSUB 1200
+830 IF LOWER$ ( I$ ) = "u" OR LOWER$ ( I$ ) = "up" THEN GOSUB 1200
+840 IF LOWER$ ( I$ ) = "d" OR LOWER$ ( I$ ) = "down" THEN GOSUB 1200
+895 IF MOVE = 1 THEN GOTO 700 ELSE GOTO 710
+900 STOP
+995 REM ========== actions ==========
+1000 REM list the player's inventory
+1005 PRINT "You have the following items:" : PRINT
+1010 FOR I = 0 TO OC - 1
+1020 IF OL ( I ) = 0 THEN PRINT OB$ ( I )
+1030 NEXT I
 1035 PRINT
-1040 RETURN 
-1100 REM fully written out move (e.g. 'go aft') 
-1110 D$ = MID$ ( LOWER$(I$) , 4 , 1 ) 
-1120 GOSUB 1300 
-1130 RETURN 
-1200 REM abbreviated move (e.g. 'a' or 'aft') 
-1210 D$ = LOWER$( I$ ) 
-1220 GOSUB 1300 
-1230 RETURN 
-1300 REM go to the player's new location (PL) 
+1040 RETURN
+1100 REM fully written out move (e.g. 'go aft')
+1110 D$ = MID$ ( LOWER$(I$) , 4 , 1 )
+1120 GOSUB 1300
+1130 RETURN
+1200 REM abbreviated move (e.g. 'a' or 'aft')
+1210 D$ = LOWER$( I$ )
+1220 GOSUB 1300
+1230 RETURN
+1300 REM go to the player's new location (PL)
 1310 IF D$ = "f" THEN NPL = VAL ( MID$ ( EX$ ( PL ) , 1 , 2 ) )
 1320 IF D$ = "a" THEN NPL = VAL ( MID$ ( EX$ ( PL ) , 3 , 2 ) )
 1330 IF D$ = "p" THEN NPL = VAL ( MID$ ( EX$ ( PL ) , 5 , 2 ) )
@@ -74,8 +74,8 @@
 1345 IF D$ = "u" THEN NPL = VAL ( MID$ ( EX$ ( PL ) , 9 , 2 ) )
 1350 IF D$ = "d" THEN NPL = VAL ( MID$ ( EX$ ( PL ) , 11 , 2 ) )
 1355 IF NPL = 0 THEN PRINT "You can't go that way." : PRINT ELSE PL = NPL
-1360 RETURN 
-1400 REM get command 
+1360 RETURN
+1400 REM get command
 1405 F=-1: R$=""
 1410 R$ = MID$(LOWER$(I$), 5) : REM R$ is the requested object
 1420 REM get the object ID
@@ -85,15 +85,15 @@
 1460 REM can't find the item?
 1470 IF F=-1 THEN PRINT "You can't take that." : PRINT : RETURN
 1480 IF OL(F) <> PL THEN PRINT "That item doesn't appear to be around here." : PRINT : RETURN
-1490 IF OL(F)=0 THEN PRINT "You already have that item." : PRINT: RETURN 
+1490 IF OL(F)=0 THEN PRINT "You already have that item." : PRINT: RETURN
 1520 OL(F)=0 : REM add the item to the inventory
 1530 PRINT "You've picked up ";OB$(F); "." : PRINT
 1540 RETURN
-1700 REM take command 
+1700 REM take command
 1710 F=-1: R$=""
 1720 R$ = MID$(LOWER$(I$), 6) : REM R$ is the requested object
 1730 GOTO 1420 : REM use the same logic as the get command
-2000 REM drop command 
+2000 REM drop command
 2010 F=-1: R$=""
 2020 R$ = MID$(LOWER$(I$), 6) : REM R$ is the requested object
 2030 FOR I= 0 TO OC-1
@@ -105,7 +105,7 @@
 2090 OL(F) = PL : PRINT "You've dropped ";OB$(F); ".": PRINT: REM add the item to the current room
 2095 IF F = SUIT THEN SUIT_WORN = 0
 2110 RETURN
-2300 REM examine command 
+2300 REM examine command
 2310 F=-1 : R$=""
 2320 R$ = MID$(LOWER$(I$), 9) : REM R$ is the object to examine
 2330 FOR I = 0 TO IC-1
@@ -115,8 +115,8 @@
 2370 IF F=-1 THEN PRINT "You can't examine that." : PRINT : RETURN
 2380 IF IL(F) <> PL THEN PRINT "There isn't one of these here." : PRINT : RETURN
 2390 GOSUB 6000 : REM print result of examination
-2400 RETURN 
-2600 REM quit command 
+2400 RETURN
+2600 REM quit command
 2610 PRINT "Farewell spacefarer ..."
 2620 STOP
 2630 REM talk to command
@@ -130,32 +130,32 @@
 2670 IF PLOC(F) <> PL THEN PRINT "They aren't here." : PRINT : RETURN
 2675 GOSUB 7500 : REM print dialogue
 2695 RETURN
-2700 REM ========== set up environment =========== 
-2705 RC = 18 : REM room count 
-2710 DIM LO$ ( RC ) 
-2715 INV = 0 : LO$ ( INV ) = "Inventory" 
-2720 GAL = 1 : LO$ ( GAL ) = "Galley" 
-2725 REC = 2 : LO$ ( REC ) = "Recreation/Dining Room" 
-2730 ARM = 3 : LO$ ( ARM ) = "Armoury" 
-2735 BDG = 4 : LO$ ( BDG ) = "Bridge" 
-2740 SLP = 5 : LO$ ( SLP ) = "Sleeping Quarters" 
-2745 MED = 6 : LO$ ( MED ) = "Medical Centre" 
-2750 GYM = 7 : LO$ ( GYM ) = "Gymnasium" 
-2755 LAC = 8 : LO$ ( LAC ) = "Lower Aft Corridor" 
-2760 ENG = 9 : LO$ ( ENG ) = "Engine Room" 
-2765 STO = 10 : LO$ ( STO ) = "Storeroom" 
-2770 MEN = 11 : LO$ ( MEN ) = "Menagerie" 
-2775 LAB = 12 : LO$ ( LAB ) = "Laboratory" 
-2780 LFC = 13 : LO$ ( LFC ) = "Lower Forward Corridor" 
-2785 POD = 14 : LO$ ( POD ) = "Pod Bay" 
-2790 AMC = 15 : LO$ ( AMC ) = "Aft Main Corridor" 
-2795 MMC = 16 : LO$ ( MMC ) = "Mid Main Corridor" 
-2800 FMC = 17 : LO$ ( FMC ) = "Forward Main Corridor" 
-2805 REM encoded room exits, two digits per direction f, a, p, s, u, d 
-2810 DIM EX$ ( RC ) 
-2815 EX$ ( GAL ) = "020000150008" 
-2820 EX$ ( REC ) = "000100160000" 
-2825 EX$ ( ARM ) = "000000170000" 
+2700 REM ========== set up environment ===========
+2705 RC = 18 : REM room count
+2710 DIM LO$ ( RC )
+2715 INV = 0 : LO$ ( INV ) = "Inventory"
+2720 GAL = 1 : LO$ ( GAL ) = "Galley"
+2725 REC = 2 : LO$ ( REC ) = "Recreation/Dining Room"
+2730 ARM = 3 : LO$ ( ARM ) = "Armoury"
+2735 BDG = 4 : LO$ ( BDG ) = "Bridge"
+2740 SLP = 5 : LO$ ( SLP ) = "Sleeping Quarters"
+2745 MED = 6 : LO$ ( MED ) = "Medical Centre"
+2750 GYM = 7 : LO$ ( GYM ) = "Gymnasium"
+2755 LAC = 8 : LO$ ( LAC ) = "Lower Aft Corridor"
+2760 ENG = 9 : LO$ ( ENG ) = "Engine Room"
+2765 STO = 10 : LO$ ( STO ) = "Storeroom"
+2770 MEN = 11 : LO$ ( MEN ) = "Menagerie"
+2775 LAB = 12 : LO$ ( LAB ) = "Laboratory"
+2780 LFC = 13 : LO$ ( LFC ) = "Lower Forward Corridor"
+2785 POD = 14 : LO$ ( POD ) = "Pod Bay"
+2790 AMC = 15 : LO$ ( AMC ) = "Aft Main Corridor"
+2795 MMC = 16 : LO$ ( MMC ) = "Mid Main Corridor"
+2800 FMC = 17 : LO$ ( FMC ) = "Forward Main Corridor"
+2805 REM encoded room exits, two digits per direction f, a, p, s, u, d
+2810 DIM EX$ ( RC )
+2815 EX$ ( GAL ) = "020000150008"
+2820 EX$ ( REC ) = "000100160000"
+2825 EX$ ( ARM ) = "000000170000"
 2830 EX$ ( BDG ) = "001700000000"
 2835 EX$ ( SLP ) = "000015000000"
 2840 EX$ ( MED ) = "070016000000"
@@ -170,19 +170,19 @@
 2890 EX$ ( AMC ) = "160001050000"
 2895 EX$ ( MMC ) = "171502060000"
 2900 EX$ ( FMC ) = "041603070000"
-2905 OC = 5 : REM object count 
-2910 DIM OB$ ( OC ) 
-2915 PULSE = 0 : OB$ ( PULSE ) = "pulse rifle" 
-2920 SUIT = 1 : OB$ ( SUIT ) = "space suit" 
-2922 KNIFE = 2 : OB$ ( KNIFE ) = "knife" 
+2905 OC = 5 : REM object count
+2910 DIM OB$ ( OC )
+2915 PULSE = 0 : OB$ ( PULSE ) = "pulse rifle"
+2920 SUIT = 1 : OB$ ( SUIT ) = "space suit"
+2922 KNIFE = 2 : OB$ ( KNIFE ) = "knife"
 2924 TRACKER = 3 : OB$ ( TRACKER ) = "tracker"
 2926 SYRINGE = 4 : OB$ ( SYRINGE ) = "syringe"
-2930 REM object locations 
-2932 REM location 0 = player's inventory 
-2934 DIM OL ( OC )  
-2936 OL ( PULSE ) = ARM 
-2937 OL ( SUIT ) = POD 
-2939 OL ( KNIFE ) = GAL 
+2930 REM object locations
+2932 REM location 0 = player's inventory
+2934 DIM OL ( OC )
+2936 OL ( PULSE ) = ARM
+2937 OL ( SUIT ) = POD
+2939 OL ( KNIFE ) = GAL
 2940 OL ( TRACKER ) = GYM
 2941 OL ( SYRINGE ) = MED
 2942 IC = 5 : REM interactive object count
@@ -193,7 +193,7 @@
 2952 ENGINE = 3 : IO$(ENGINE)= "engine control"
 2954 TERMINAL = 4 : IO$(TERMINAL) = "library terminal"
 2960 REM interative object locations
-2962 DIM IL ( IC ) 
+2962 DIM IL ( IC )
 2964 IL ( MEDLOG) = MED
 2966 IL (PORTHOLE) = POD
 2968 IL (CONSOLE) = BDG
@@ -217,13 +217,13 @@
 3000 REM ========== room descriptions ==========
 3010 DIM RD$ ( RC, 5 )
 3015 REM inventory
-3020 DATA "", "", "", "", "" 
+3020 DATA "", "", "", "", ""
 3025 REM galley
 3030 DATA "The galley contains gleaming, stainless steel cupboards along the aft wall. A food"
 3040 DATA "preparation surface is on the port wall, currently covered in rotting food. A chef"
 3050 DATA "stands at the work surface, methodically chopping food even though everything has"
 3060 DATA "already been thoroughly diced. There are doors in the starboard and forward walls and"
-3070 DATA "a stairway leads downwards in the far corner." 
+3070 DATA "a stairway leads downwards in the far corner."
 3075 REM recreation room
 3080 DATA "Space is clearly at a premium in this ship. The room doubles as both a dining and"
 3090 DATA "recreation area. Long tables for dining are located on the port side, while couches"
@@ -276,7 +276,7 @@
 3550 DATA "and walls are smeared with animal faeces, and the smell is almost overpowering. A capsule,"
 3552 DATA "its door ajar, is marked 'BIOWEAPON CONTAINMENT'. The capsule is empty."
 3555 DATA "A single door to port leads back into the storeroom."
-3560 REM laboratory 
+3560 REM laboratory
 3570 DATA "The laboratory is full of scientific equipment, chemical glassware, electronic analysers,"
 3580 DATA "fume cupboards, and two couches. The place looks disorded, like the rest of the ship, the"
 3590 DATA "result of frenetic activity. A number of experiments seem to be in progress, with logbooks"
@@ -318,13 +318,13 @@
 4070 REM print objects
 4080 FOR I = 0 TO OC-1
 4090 IF OL ( I ) = PL THEN PRINT : PRINT "You can see: ";OB$ ( I ); "."
-4100 NEXT I 
+4100 NEXT I
 4110 PRINT
 4115 IF PL = LAB THEN GOSUB 9700
-4120 RETURN 
+4120 RETURN
 4130 REM ========== print help ==========
-4140 PRINT "For movement, try [go] a[ft], f[orward], p[ort], s[tarboard], u[p] or d[own]." 
-4150 PRINT "For actions, try get, take, drop, examine, look, use, i[nventory], q[uit]." 
+4140 PRINT "For movement, try [go] a[ft], f[orward], p[ort], s[tarboard], u[p] or d[own]."
+4150 PRINT "For actions, try get, take, drop, examine, look, use, i[nventory], q[uit]."
 4155 PRINT "To examine, pick up, use or drop items, refer to them exactly as they are described."
 4157 PRINT
 4160 RETURN
@@ -489,7 +489,7 @@
 9530 PRINT "Engine restart initiated ... engines online." : PRINT
 9535 ID$ (ENGINE, 10) = "'WARNING: CORE BREACH IMMINENT'" : RETURN
 9540 SHUTDOWN = 1
-9550 PRINT "Engine shutdown initiated ... engines offline." : PRINT 
+9550 PRINT "Engine shutdown initiated ... engines offline." : PRINT
 9555 ID$ (ENGINE, 10) = "'ENGINES OFFLINE'"
 9560 RETURN
 9700 REM ========== laboratory conversation ==========
@@ -541,11 +541,11 @@
 11140 IF DIR = 6 THEN INDEX = 11
 11150 NPL = VAL ( MID$ ( EX$ ( PL ) , INDEX , 2 ) ) : REM potential next location
 11160 IF NPL = 0 THEN GOTO 11080 : REM can't go that way
-11170 PL = NPL : PRINT "You are in the " ; LO$ ( PL ) : PRINT 
+11170 PL = NPL : PRINT "You are in the " ; LO$ ( PL ) : PRINT
 11175 GOSUB 4010
 11180 RETURN
 11190 REM fight
-11200 FEROCITY = 60 : REM ferocity factor for wraith-hound 
+11200 FEROCITY = 60 : REM ferocity factor for wraith-hound
 11205 STAMINA = 50 : REM your stamina
 11210 IF OL(PULSE) <> INV AND OL(KNIFE) <> INV THEN PRINT "You have no weapons, and must fight bare handed." : PRINT : GOTO 11280
 11220 IF OL(PULSE) = INV AND OL(KNIFE) <> INV THEN PRINT "Luckily, you have a pulse rifle." : PRINT: FEROCITY=50 : GOTO 11280
@@ -565,7 +565,7 @@
 11340 IF FEROCITY > 0 THEN GOTO 11390
 11350 PRINT "You slayed the wraith-hound!" : PRINT
 11360 REM remove creature from the game
-11370 WPL = 99 : REM inaccessible location 
+11370 WPL = 99 : REM inaccessible location
 11380 RETURN
 11390 IF STAMINA > 0 THEN GOTO 11420
 11400 PRINT "You were slayed by the wraith-hound! You have failed to save the Pneuma." : PRINT
@@ -575,11 +575,3 @@
 11440 FOR T = 1 TO 80000
 11450 NEXT T
 11460 RETURN
-
-
-
-
-
-
-
-

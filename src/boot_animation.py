@@ -2,15 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 import json
+import math
+import time
 
+import adafruit_fruitjam
+import adafruit_imageload
 import board
 import supervisor
-from displayio import TileGrid, Group
-import adafruit_imageload
-import time
-import math
-import adafruit_fruitjam
-
+from displayio import Group, TileGrid
 from launcher_config import LauncherConfig
 
 launcher_config = LauncherConfig()
@@ -38,7 +37,7 @@ if tlv320_present:
         volume_level = 0.7
     fjPeriphs = adafruit_fruitjam.peripherals.Peripherals(
         audio_output=launcher_config.audio_output,
-        safe_volume_limit=launcher_config.audio_volume_override_danger
+        safe_volume_limit=launcher_config.audio_volume_override_danger,
     )
 
     fjPeriphs.volume = volume_level
@@ -81,10 +80,18 @@ class OvershootAnimator:
         self.sprite_anim_to_index = None
         self.sprite_anim_delay = None
 
-    def animate_to(self, target_x, target_y, duration=1.0, overshoot_pixels=20,
-                   start_sprite_anim_at=None, sprite_delay=1 / 60,
-                   sprite_from_index=None, sprite_to_index=None, eased_value=None):
-
+    def animate_to(
+        self,
+        target_x,
+        target_y,
+        duration=1.0,
+        overshoot_pixels=20,
+        start_sprite_anim_at=None,
+        sprite_delay=1 / 60,
+        sprite_from_index=None,
+        sprite_to_index=None,
+        eased_value=None,
+    ):
         """
         Start a new animation to the specified target.
 
@@ -171,10 +178,9 @@ class OvershootAnimator:
                 # print("sprite_still_animating", still_sprite_animating)
                 if not still_sprite_animating:
                     return False
-        else:
-            if not self.pos_animating:
-                # print("returning false cur_sprite_index was None and pos_animating False")
-                return False
+        elif not self.pos_animating:
+            # print("returning false cur_sprite_index was None and pos_animating False")
+            return False
 
         # Calculate elapsed time and progress
         elapsed = _now - self.start_time
@@ -200,7 +206,7 @@ class OvershootAnimator:
                 # Use a single smooth curve to the overshoot point
                 eased = progress / 0.7  # Linear acceleration toward overshoot
                 # Apply slight ease-in to make it accelerate through the target point
-                eased = eased ** 1.2
+                eased = eased**1.2
                 current_x = self.start_x + (self.overshoot_x - self.start_x) * eased
                 current_y = self.start_y + (self.overshoot_y - self.start_y) * eased
             else:  # Return from overshoot to target
@@ -233,7 +239,9 @@ class OvershootAnimator:
         self.pos_animating = False
 
 
-apple_sprites, apple_sprites_palette = adafruit_imageload.load("/boot_animation_assets/apple_spritesheet.bmp")
+apple_sprites, apple_sprites_palette = adafruit_imageload.load(
+    "/boot_animation_assets/apple_spritesheet.bmp"
+)
 f_sprites, f_sprites_palette = adafruit_imageload.load("/boot_animation_assets/f_spritesheet.bmp")
 r_sprites, r_sprites_palette = adafruit_imageload.load("/boot_animation_assets/r_spritesheet.bmp")
 u_sprites, u_sprites_palette = adafruit_imageload.load("/boot_animation_assets/u_spritesheet.bmp")
@@ -258,24 +266,38 @@ main_group.append(sliding_group)
 letters_x_start = 83
 letters_y_start = display.height
 
-apple_tilegrid = TileGrid(apple_sprites, pixel_shader=apple_sprites_palette,
-                          tile_width=73, tile_height=107, width=1, height=1)
-f_tilegrid = TileGrid(f_sprites, pixel_shader=f_sprites_palette,
-                      tile_width=32, tile_height=39, width=1, height=1)
-r_tilegrid = TileGrid(r_sprites, pixel_shader=r_sprites_palette,
-                      tile_width=32, tile_height=39, width=1, height=1)
-u_tilegrid = TileGrid(u_sprites, pixel_shader=u_sprites_palette,
-                      tile_width=32, tile_height=39, width=1, height=1)
-i_tilegrid = TileGrid(i_sprites, pixel_shader=i_sprites_palette,
-                      tile_width=16, tile_height=39, width=1, height=1)
-t_tilegrid = TileGrid(t_sprites, pixel_shader=t_sprites_palette,
-                      tile_width=32, tile_height=39, width=1, height=1)
-j_tilegrid = TileGrid(j_sprites, pixel_shader=j_sprites_palette,
-                      tile_width=32, tile_height=39, width=1, height=1)
-a_tilegrid = TileGrid(a_sprites, pixel_shader=a_sprites_palette,
-                      tile_width=32, tile_height=39, width=1, height=1)
-m_tilegrid = TileGrid(m_sprites, pixel_shader=m_sprites_palette,
-                      tile_width=43, tile_height=39, width=1, height=1)
+apple_tilegrid = TileGrid(
+    apple_sprites,
+    pixel_shader=apple_sprites_palette,
+    tile_width=73,
+    tile_height=107,
+    width=1,
+    height=1,
+)
+f_tilegrid = TileGrid(
+    f_sprites, pixel_shader=f_sprites_palette, tile_width=32, tile_height=39, width=1, height=1
+)
+r_tilegrid = TileGrid(
+    r_sprites, pixel_shader=r_sprites_palette, tile_width=32, tile_height=39, width=1, height=1
+)
+u_tilegrid = TileGrid(
+    u_sprites, pixel_shader=u_sprites_palette, tile_width=32, tile_height=39, width=1, height=1
+)
+i_tilegrid = TileGrid(
+    i_sprites, pixel_shader=i_sprites_palette, tile_width=16, tile_height=39, width=1, height=1
+)
+t_tilegrid = TileGrid(
+    t_sprites, pixel_shader=t_sprites_palette, tile_width=32, tile_height=39, width=1, height=1
+)
+j_tilegrid = TileGrid(
+    j_sprites, pixel_shader=j_sprites_palette, tile_width=32, tile_height=39, width=1, height=1
+)
+a_tilegrid = TileGrid(
+    a_sprites, pixel_shader=a_sprites_palette, tile_width=32, tile_height=39, width=1, height=1
+)
+m_tilegrid = TileGrid(
+    m_sprites, pixel_shader=m_sprites_palette, tile_width=43, tile_height=39, width=1, height=1
+)
 
 coordinator = {
     "steps": [
@@ -308,7 +330,6 @@ coordinator = {
             "start_time": 0.45,
             "sprite_anim_start": 0.347,
             "started": False,
-
         },
         # R fly on
         {
@@ -430,7 +451,7 @@ coordinator = {
             "start_time": 3.6,
             "sprite_anim_start": 0.4,
             "started": False,
-        }
+        },
     ]
 }
 
@@ -443,41 +464,43 @@ for step in coordinator["steps"]:
     step["animator"] = OvershootAnimator(step["tilegrid"])
 
 # F bounce up from J impact
-coordinator["steps"].insert(8,
-                            {
-                                "type": "animation_step",
-                                "tilegrid": coordinator["steps"][1]["tilegrid"],
-                                "animator": coordinator["steps"][1]["animator"],
-                                "offscreen_loc": (letters_x_start, letters_y_start),
-                                "onscreen_loc": (letters_x_start, 52),
-                                "move_duration": 0.3,
-                                "overshoot_pixels": 22,
-                                "eased_value": None,
-                                "sprite_anim_range": (19, 27),
-                                "sprite_delay": 1 / 22,
-                                "start_time": 3.0,
-                                "sprite_anim_start": 0.15,
-                                "started": False,
-                            },
-                            )
+coordinator["steps"].insert(
+    8,
+    {
+        "type": "animation_step",
+        "tilegrid": coordinator["steps"][1]["tilegrid"],
+        "animator": coordinator["steps"][1]["animator"],
+        "offscreen_loc": (letters_x_start, letters_y_start),
+        "onscreen_loc": (letters_x_start, 52),
+        "move_duration": 0.3,
+        "overshoot_pixels": 22,
+        "eased_value": None,
+        "sprite_anim_range": (19, 27),
+        "sprite_delay": 1 / 22,
+        "start_time": 3.0,
+        "sprite_anim_start": 0.15,
+        "started": False,
+    },
+)
 # R bounce up from A impact
-coordinator["steps"].insert(10,
-                            {
-                                "type": "animation_step",
-                                "tilegrid": coordinator["steps"][2]["tilegrid"],
-                                "animator": coordinator["steps"][2]["animator"],
-                                "offscreen_loc": (letters_x_start + 32 + 3 - 1, letters_y_start),
-                                "onscreen_loc": (letters_x_start + 32 + 3 - 1, 52),
-                                "move_duration": 0.3,
-                                "overshoot_pixels": 22,
-                                "eased_value": None,
-                                "sprite_anim_range": (19, 27),
-                                "sprite_delay": 1 / 22,
-                                "start_time": 3.45,
-                                "sprite_anim_start": 0.15,
-                                "started": False,
-                            },
-                            )
+coordinator["steps"].insert(
+    10,
+    {
+        "type": "animation_step",
+        "tilegrid": coordinator["steps"][2]["tilegrid"],
+        "animator": coordinator["steps"][2]["animator"],
+        "offscreen_loc": (letters_x_start + 32 + 3 - 1, letters_y_start),
+        "onscreen_loc": (letters_x_start + 32 + 3 - 1, 52),
+        "move_duration": 0.3,
+        "overshoot_pixels": 22,
+        "eased_value": None,
+        "sprite_anim_range": (19, 27),
+        "sprite_delay": 1 / 22,
+        "start_time": 3.45,
+        "sprite_anim_start": 0.15,
+        "started": False,
+    },
+)
 # U bounce up from M impact
 coordinator["steps"].append(
     {
@@ -538,7 +561,7 @@ coordinator["steps"].append(
         "start_time": 4.75,
         "type": "change_palette",
         "new_palette": "red_palette",
-        "color": 0xff0000,
+        "color": 0xFF0000,
         "started": False,
     }
 )
@@ -548,7 +571,7 @@ coordinator["steps"].append(
         "start_time": 5,
         "type": "change_palette",
         "new_palette": "yellow_palette",
-        "color": 0xffff00,
+        "color": 0xFFFF00,
         "started": False,
     }
 )
@@ -558,7 +581,7 @@ coordinator["steps"].append(
         "start_time": 5.25,
         "type": "change_palette",
         "new_palette": "teal_palette",
-        "color": 0x00ffff,
+        "color": 0x00FFFF,
         "started": False,
     }
 )
@@ -568,7 +591,7 @@ coordinator["steps"].append(
         "start_time": 5.5,
         "type": "change_palette",
         "new_palette": "pink_palette",
-        "color": 0xff00ff,
+        "color": 0xFF00FF,
         "started": False,
     }
 )
@@ -578,7 +601,7 @@ coordinator["steps"].append(
         "start_time": 5.75,
         "type": "change_palette",
         "new_palette": "blue_palette",
-        "color": 0x0000ff,
+        "color": 0x0000FF,
         "started": False,
     }
 )
@@ -588,7 +611,7 @@ coordinator["steps"].append(
         "start_time": 6.00,
         "type": "change_palette",
         "new_palette": "green_palette",
-        "color": 0x00ff00,
+        "color": 0x00FF00,
         "started": False,
     }
 )
@@ -634,7 +657,7 @@ display.root_group = main_group
 start_time = time.monotonic()
 
 if tlv320_present:
-    fjPeriphs.play_file(wave_file,False)
+    fjPeriphs.play_file(wave_file, False)
 
 while True:
     now = time.monotonic()
@@ -649,17 +672,20 @@ while True:
                     if step["sprite_anim_range"] is not None:
                         step["animator"].animate_to(
                             *step["onscreen_loc"],
-                            duration=step["move_duration"], overshoot_pixels=step["overshoot_pixels"],
+                            duration=step["move_duration"],
+                            overshoot_pixels=step["overshoot_pixels"],
                             start_sprite_anim_at=step["sprite_anim_start"],
                             sprite_from_index=step["sprite_anim_range"][0],
                             sprite_to_index=step["sprite_anim_range"][1],
-                            sprite_delay=step["sprite_delay"], eased_value=step["eased_value"],
+                            sprite_delay=step["sprite_delay"],
+                            eased_value=step["eased_value"],
                         )
                     else:
                         step["animator"].animate_to(
                             *step["onscreen_loc"],
-                            duration=step["move_duration"], overshoot_pixels=step["overshoot_pixels"],
-                            eased_value=step["eased_value"]
+                            duration=step["move_duration"],
+                            overshoot_pixels=step["overshoot_pixels"],
+                            eased_value=step["eased_value"],
                         )
                 elif step["type"] == "change_palette":
                     # color_sweep_all(step["color"], delay=0)
@@ -672,9 +698,8 @@ while True:
                     still_going = step["animator"].tick()
                 else:
                     step["animator"].tick()
-            else:
-                if i == len(coordinator["steps"]) - 1:
-                    still_going = False
+            elif i == len(coordinator["steps"]) - 1:
+                still_going = False
     # display.refresh(target_frames_per_second=TARGET_FPS)
     display.refresh()
 

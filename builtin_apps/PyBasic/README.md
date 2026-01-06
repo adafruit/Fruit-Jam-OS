@@ -33,7 +33,7 @@ Although this started of as a personal project, it has been enhanced considerabl
 The interpreter now supports reading data directly into array elements using both **INPUT** and **READ** statements:
 
 - **Array Elements as Targets**: Use syntax like `INPUT A(1), B(I+2)` and `READ N$(1), N$(2)`
-- **Expression Indices**: Support for complex expressions in array indices like `A(I*2+1)` 
+- **Expression Indices**: Support for complex expressions in array indices like `A(I*2+1)`
 - **Mixed Data Types**: Read numeric and string data into appropriate array types
 - **Error Handling**: Proper SUBSCRIPT ERROR and OUT OF DATA error messages
 - **Specification Compliant**: Follows classic BASIC behavior for all edge cases
@@ -264,7 +264,7 @@ are all invalid.
 
 Numeric variables have no suffix, whereas string variables are always suffixed by '$'. Note that 'I' and 'I$' are
 considered to be separate variables. Note that string literals must always be enclosed within double quotes (not single quotes).
-Using no quotes will result in a syntax error. 
+Using no quotes will result in a syntax error.
 
 Array variables are defined using the **DIM** statement, which explicitly lists how
 many dimensions the array has, and the sizes of those dimensions:
@@ -276,7 +276,7 @@ many dimensions the array has, and the sizes of those dimensions:
 
 Note that the index of each dimension always starts at *zero*, but for
 compatibility with some basic dialects the bounds of each dimension will be
-expanded by one to enable element access including the len. So in the above example, 
+expanded by one to enable element access including the len. So in the above example,
 valid index values for array *A* will be *0, 1*, *2* or *3*
 for each dimension. Arrays may have a maximum of three dimensions. Numeric arrays will
 be initialised with each element set to zero, while string arrays will be initialised
@@ -307,7 +307,7 @@ Empty array value returned in line 30
 >
 ```
 
-Since **all PyBasic variables have a global scope** and string memory is managed by the python interpreter, there is no garbage collection in PyBasic.  
+Since **all PyBasic variables have a global scope** and string memory is managed by the python interpreter, there is no garbage collection in PyBasic.
 
 ### Program constants
 
@@ -328,7 +328,7 @@ in a state where a variable has not been assigned a value, but nevertheless an a
 made later on in the program.
 
 Normally each **DATA** statement is consumed sequently by **READ** statements however, the **RESTORE** statement can
-be used to override this order and set the line number of the **DATA** statement that will be used by the next 
+be used to override this order and set the line number of the **DATA** statement that will be used by the next
 **READ** statement. If the *line-number* used in a **RESTORE** statement does not refer to a **DATA** statement an
 error will be displayed.
 
@@ -659,8 +659,8 @@ Outer: 2
 
 ### Conditionals
 
-Conditionals are implemented using the **IF-THEN-ELSE** statement. The expression is evaluated and the appropriate 
-statements executed depending upon the result of the evaluation. If a positive integer is supplied as 
+Conditionals are implemented using the **IF-THEN-ELSE** statement. The expression is evaluated and the appropriate
+statements executed depending upon the result of the evaluation. If a positive integer is supplied as
 the **THEN** or the **ELSE** statement, a branch will be performed to the indicated line number.
 
 Note that the **ELSE** clause is optional and may be omitted. In this case, the **THEN** branch is taken if the
@@ -774,7 +774,7 @@ Test failed!
 
 The **ON GOTO|GOSUB** *expr* *line1,line2,...* statement will call a subroutine or branch to a line number in the list of line numbers corresponding to the ordinal
 value of the evaluated *expr*. The first line number corresponds with an *expr* value of 1.  *expr* must evaluate to an integer value.
- If *expr* evaluates to less than 1 or greater than the number of provided line numbers execution continues on the next 
+ If *expr* evaluates to less than 1 or greater than the number of provided line numbers execution continues on the next
 statement without making a subroutine call or branch:
 
 ```
@@ -918,7 +918,7 @@ Data can be read from or written to files using the **OPEN**, **FSEEK**, **INPUT
 
 When a file is opened using the syntax **OPEN** "*filename*" **FOR INPUT|OUTPUT|APPEND AS** *#filenum* [**ELSE** *linenum*] a
 file number (*#filenum*) is assigned to the file, which if specified as the first argument of an **INPUT** or **PRINT**
-statement, will direct the input or output to the file. 
+statement, will direct the input or output to the file.
 
 If there is an error opening a file and the optional **ELSE** option has been specified, program control
 will branch to the specified line number, if the **ELSE** has not been provided an error message will be displayed.
@@ -1107,7 +1107,7 @@ and expanded by Don Woods.
 
 * *eliza.bas* - A port of the early chatbot, posing as a therapist, originally created by Joseph Weizenbaum in 1964. This BASIC version can trace its lineage back to an implementation originally developed by Jeff Shrager in 1973.
 
-* *oregon.bas* - A port (of a port by the looks of it) of The Oregon Trail. This is a text based adventure game, originally developed by Don Rawitsch, Bill Heinemann, and Paul Dillenberger in 1971. This could still be a bit buggy, the listing I found wasn't the greatest. 
+* *oregon.bas* - A port (of a port by the looks of it) of The Oregon Trail. This is a text based adventure game, originally developed by Don Rawitsch, Bill Heinemann, and Paul Dillenberger in 1971. This could still be a bit buggy, the listing I found wasn't the greatest.
 
 * *life.bas* - An implementation of Conway's Game of Life. This version is a port of the BASIC program which appeared in 'BASIC Computer Games' in 1978.
 

@@ -84,31 +84,31 @@
 690 N = N + 1
 700 IF N < 2 THEN GOTO 650
 810 PRINT "The loop variable I should be equal to 5, I=";I
-815 DATA "DATA Statement tests..." 
+815 DATA "DATA Statement tests..."
 820 READ A$
-825 PRINT "The next line should read: DATA Statement tests..." 
-830 PRINT A$ 
-840 DATA 1 , 2 , 3 
-850 DATA 4 , 5 , 6 
-855 DATA 1.5 , 2 , "test" 
+825 PRINT "The next line should read: DATA Statement tests..."
+830 PRINT A$
+840 DATA 1 , 2 , 3
+850 DATA 4 , 5 , 6
+855 DATA 1.5 , 2 , "test"
 858 PRINT "The next three lines should be: 12 34 56"
-860 FOR I = 1 TO 3 
-870 READ J , K 
-880 PRINT J ; K 
-890 NEXT I 
-900 RESTORE 840 
-910 READ I , J , K 
-920 PRINT "the next line should print 123" 
-930 PRINT I ; J ; K 
-970 RESTORE 855 
-980 READ A1 , B , C$ 
-990 PRINT "Float: " ; A1 ; " Int: " ; B ; " String: " ; C$ 
-1000 RESTORE 850 
-1010 READ I , J , K , L 
-1020 PRINT "the next line should print 4561.5:" 
-1030 PRINT I; J ; K ; L 
+860 FOR I = 1 TO 3
+870 READ J , K
+880 PRINT J ; K
+890 NEXT I
+900 RESTORE 840
+910 READ I , J , K
+920 PRINT "the next line should print 123"
+930 PRINT I ; J ; K
+970 RESTORE 855
+980 READ A1 , B , C$
+990 PRINT "Float: " ; A1 ; " Int: " ; B ; " String: " ; C$
+1000 RESTORE 850
+1010 READ I , J , K , L
+1020 PRINT "the next line should print 4561.5:"
+1030 PRINT I; J ; K ; L
 1040 PRINT "The next lines should print: 'Hello World' and then 'AGAIN' under the word 'World'"
-1050 PRINT "Hel" ; : PRINT "lo" ; TAB ( 7 ) ; "World" ; TAB ( 7 ) ; "AGAIN" 
+1050 PRINT "Hel" ; : PRINT "lo" ; TAB ( 7 ) ; "World" ; TAB ( 7 ) ; "AGAIN"
 1060 PRINT "This loop should count from 1 to 10"
 1070 FOR I = 1 TO 10
 1080 FOR J = 1 TO 3
@@ -116,35 +116,35 @@
 1100 GOTO 1130
 1120 NEXT J
 1130 NEXT I
-1140 INPUT "Enter T for the THEN blocks to execute, E for the ELSE (T/E): " ; ANS$ 
-1150 ANS$ = UPPER$ ( ANS$ ) 
-1160 IF ANS$ = "T" THEN 1190 
-1170 PRINT "1170: Did not enter T" 
-1180 GOTO 1200 
-1190 PRINT "1190: Entered T" 
-1200 IF ANS$ = "T" THEN GOTO 1230 
-1210 PRINT "1210: Did not enter T" 
-1220 GOTO 1240 
-1230 PRINT "1230: Entered T" 
-1240 IF ANS$ = "T" THEN 1280 ELSE 1260 
-1250 PRINT "ERROR - Should not be at line 1250" 
-1260 PRINT "1260: Did not enter T" 
-1270 GOTO 1290 
-1280 PRINT "1280: Entered T" 
-1290 IF ANS$ = "T" THEN GOTO 1330 ELSE GOTO 1310 
-1300 PRINT "ERROR - Should not be at line 1300" 
-1310 PRINT "1310: Did not enter T" 
-1320 GOTO 1340 
-1330 PRINT "1330: Entered T" 
-1340 IF ANS$ = "T" THEN PRINT "1340: Entered T" 
-1350 IF ANS$ <> "T" THEN PRINT "1350: Did not enter T" 
-1360 IF ANS$ = "T" THEN PRINT "1360: Entered T" ELSE PRINT "1360: Did not enter T" 
-1370 IF ANS$ = "T" THEN PRINT "1370: Entered T" : GOTO 1390 
-1380 IF ANS$ <> "T" THEN PRINT "1380: Did not enter T" 
-1390 IF ANS$ = "T" THEN PRINT "1390: Entered " ; : PRINT "T" ELSE PRINT "1390: Did " ; : PRINT "not enter T" 
-1400 IF ANS$ = "T" THEN PRINT "1400: Entered T" ELSE PRINT "1400: Did " ; : PRINT "not enter T" 
-1410 IF ANS$ = "T" THEN PRINT "1410: Entered " ; : PRINT "T" ELSE PRINT "1410: Did not enter T" 
-1420 PRINT "Compound Stmt w/conditionals ";:IF ANS$ = "T" THEN PRINT "1420: Entered " ; : PRINT "T" ELSE PRINT "1420: Did " ; : PRINT "not enter T" 
+1140 INPUT "Enter T for the THEN blocks to execute, E for the ELSE (T/E): " ; ANS$
+1150 ANS$ = UPPER$ ( ANS$ )
+1160 IF ANS$ = "T" THEN 1190
+1170 PRINT "1170: Did not enter T"
+1180 GOTO 1200
+1190 PRINT "1190: Entered T"
+1200 IF ANS$ = "T" THEN GOTO 1230
+1210 PRINT "1210: Did not enter T"
+1220 GOTO 1240
+1230 PRINT "1230: Entered T"
+1240 IF ANS$ = "T" THEN 1280 ELSE 1260
+1250 PRINT "ERROR - Should not be at line 1250"
+1260 PRINT "1260: Did not enter T"
+1270 GOTO 1290
+1280 PRINT "1280: Entered T"
+1290 IF ANS$ = "T" THEN GOTO 1330 ELSE GOTO 1310
+1300 PRINT "ERROR - Should not be at line 1300"
+1310 PRINT "1310: Did not enter T"
+1320 GOTO 1340
+1330 PRINT "1330: Entered T"
+1340 IF ANS$ = "T" THEN PRINT "1340: Entered T"
+1350 IF ANS$ <> "T" THEN PRINT "1350: Did not enter T"
+1360 IF ANS$ = "T" THEN PRINT "1360: Entered T" ELSE PRINT "1360: Did not enter T"
+1370 IF ANS$ = "T" THEN PRINT "1370: Entered T" : GOTO 1390
+1380 IF ANS$ <> "T" THEN PRINT "1380: Did not enter T"
+1390 IF ANS$ = "T" THEN PRINT "1390: Entered " ; : PRINT "T" ELSE PRINT "1390: Did " ; : PRINT "not enter T"
+1400 IF ANS$ = "T" THEN PRINT "1400: Entered T" ELSE PRINT "1400: Did " ; : PRINT "not enter T"
+1410 IF ANS$ = "T" THEN PRINT "1410: Entered " ; : PRINT "T" ELSE PRINT "1410: Did not enter T"
+1420 PRINT "Compound Stmt w/conditionals ";:IF ANS$ = "T" THEN PRINT "1420: Entered " ; : PRINT "T" ELSE PRINT "1420: Did " ; : PRINT "not enter T"
 1610 PRINT "*** Finished ***"
 1620 STOP
 1630 REM A SUBROUTINE TEST

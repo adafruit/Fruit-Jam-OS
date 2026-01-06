@@ -1,11 +1,12 @@
 import hashlib
+import json
+import os
+import re
 import shutil
+import sys
 from pathlib import Path
 from urllib.request import urlretrieve
-import os
-import sys
-import json
-import re
+
 import requests
 
 from build import main as build_main
@@ -28,6 +29,7 @@ def get_file_sha256(file_path):
     except FileNotFoundError:
         return "File not found."
     return sha256_hash.hexdigest()
+
 
 def print_hashes(hash_dict):
     for filename in sorted(hash_dict.keys()):
@@ -86,12 +88,11 @@ def is_release_required():
     return False
 
 
-
 def parse_semantic_version(version_string):
     """Parse semantic version string and return (major, minor, patch)."""
 
     # Match semantic version pattern
-    match = re.match(r'^(\d+)\.(\d+)\.(\d+)(?:-.*)?(?:\+.*)?$', version_string)
+    match = re.match(r"^(\d+)\.(\d+)\.(\d+)(?:-.*)?(?:\+.*)?$", version_string)
     if not match:
         raise ValueError(f"Invalid semantic version: {version_string}")
 
@@ -110,7 +111,7 @@ def get_latest_release():
     url = f"https://api.github.com/repos/adafruit/Fruit-Jam-OS/releases/latest"
     headers = {
         "Authorization": f"token {os.getenv('GITHUB_TOKEN')}",
-        "Accept": "application/vnd.github.v3+json"
+        "Accept": "application/vnd.github.v3+json",
     }
 
     response = requests.get(url, headers=headers)
@@ -129,7 +130,7 @@ def create_release(tag_name):
     headers = {
         "Authorization": f"token {os.getenv('GITHUB_TOKEN')}",
         "Accept": "application/vnd.github.v3+json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     data = {
@@ -137,7 +138,7 @@ def create_release(tag_name):
         "name": tag_name,
         "body": f"Release {tag_name}",
         "draft": False,
-        "prerelease": False
+        "prerelease": False,
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(data))
@@ -149,8 +150,8 @@ def create_release(tag_name):
 
     return response.json()
 
-if __name__ == '__main__':
 
+if __name__ == "__main__":
     if is_release_required():
         if len(sys.argv) > 1 and sys.argv[1] == "make_release":
             print(f"Creating release for Fruit Jam OS")
@@ -176,21 +177,21 @@ if __name__ == '__main__':
                 tag_name=new_tag,
             )
 
-            #print(new_release)
+            # print(new_release)
 
-            github_output_path = os.environ.get('GITHUB_OUTPUT')
+            github_output_path = os.environ.get("GITHUB_OUTPUT")
 
             if github_output_path:
-                with open(github_output_path, 'a') as f:
+                with open(github_output_path, "a") as f:
                     f.write(f"release_created=true\n")
                     f.write(f"assets_upload_url={new_release['upload_url']}\n")
 
             print(f"Successfully created release: {new_tag}")
             print(f"Release URL: {new_release['html_url']}")
     else:
-        github_output_path = os.environ.get('GITHUB_OUTPUT')
+        github_output_path = os.environ.get("GITHUB_OUTPUT")
 
         if github_output_path:
-            with open(github_output_path, 'a') as f:
+            with open(github_output_path, "a") as f:
                 f.write(f"release_created=false\n")
                 f.write(f"assets_upload_url=None\n")
