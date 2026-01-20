@@ -7,8 +7,8 @@ import adafruit_pathlib as pathlib
 import storage
 
 try:
+    from typing import Any  # noqa: I001
     from io import FileIO
-    from typing import Any
 except ImportError:
     pass
 

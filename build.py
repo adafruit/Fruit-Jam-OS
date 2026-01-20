@@ -68,9 +68,8 @@ def create_font_specific_zip(
         shutil.copyfile("mock_boot_out.txt", temp_dir / "boot_out.txt")
 
         libcache_dir = output_dir / "libcache"
-
+        lib_dir = temp_dir / "lib"
         if libcache_dir.exists():
-            lib_dir = temp_dir / "lib"
             lib_dir.mkdir(parents=True, exist_ok=True)
             shutil.copytree(libcache_dir, lib_dir, dirs_exist_ok=True)
         else:
@@ -91,11 +90,11 @@ def create_font_specific_zip(
                     standalone_mode=False,
                 )
 
-            # create libcach dir
+            # create libcache dir
             libcache_dir.mkdir(parents=True)
 
             # copy the installed libs from temp_dir to cache
-            shutil.copytree(temp_dir / "lib", libcache_dir, dirs_exist_ok=True)
+            shutil.copytree(lib_dir, libcache_dir, dirs_exist_ok=True)
 
         os.remove(temp_dir / "boot_out.txt")
         # Create the final zip file
@@ -137,7 +136,7 @@ def main():
     learn_projects_dir = root_dir / "learn-projects"
     output_dir = root_dir / "dist"
 
-    # Create a cach directory for downloaded libs
+    # Create a cache directory for downloaded libs
     libcache_dir = output_dir / "libcache"
     if libcache_dir.exists():
         shutil.rmtree(libcache_dir)
