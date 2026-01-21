@@ -19,4 +19,3 @@ if file.rfind('/') == 0:
     os.chdir('/')
 elif file.rfind('/') != -1:
     os.chdir(file[:file.rfind('/')])
-

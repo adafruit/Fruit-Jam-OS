@@ -23,11 +23,11 @@ class FlyingToasterScreenSaver(Group):
 
     toaster_count = 6
     toast_count = 4
-    
+
     def __init__(self):
         super().__init__()
         self.init_graphics()
-    
+
     def init_graphics(self):
 
         config = LauncherConfig()
@@ -56,14 +56,14 @@ class FlyingToasterScreenSaver(Group):
             self.append(new_toaster)
 
         for i in range(self.toast_count):
-            new_toast = TileGrid(bitmap=self.sprite_sheet_bmp, 
+            new_toast = TileGrid(bitmap=self.sprite_sheet_bmp,
                                  pixel_shader=self.sprite_sheet_palette, height=1, width=1,
                                  tile_width=64, tile_height=64, default_tile=5)
             new_toast.x = random.randint(0, self.display_size[0] - new_toast.tile_width)
             new_toast.y = random.randint(0, self.display_size[0] - new_toast.tile_width)
             self.toasts.append(new_toast)
             self.append(new_toast)
-    
+
     def tick(self):
         for toaster in self.toasters:
             toaster.x -= 2
