@@ -22,19 +22,29 @@ from launcher_config import LauncherConfig
 launcher_config = LauncherConfig()
 CAN_SAVE = launcher_config.can_save()
 
-def get_screensaver_modules() -> list:
+def isdir(filename):
+    return os.stat(filename)[0] & 0o40_000
+
+def _get_screensaver_modules(dir: str) -> list:
     screensavers = []
+    dir = dir.rstrip("/")
+    if isdir(dir):
+        for name in os.listdir(dir):
+            if not name.startswith(".") and name.endswith("_screensaver.py"):
+                screensavers.append(dir + "/" + name[:-len(".py")])
+    return screensavers
 
-    for name in os.listdir():
-        if not name.startswith(".") and name.endswith("_screensaver.py"):
-            screensavers.append(os.getcwd() + "/" + name[:-len(".py")])
-
+def get_screensaver_modules() -> list:
+    screensavers = _get_screensaver_modules(os.getcwd())
     for dir in ("/screensavers/", "/sd/screensavers/"):
         if pathlib.Path(dir).exists():
+            screensavers += _get_screensaver_modules(dir)
             for name in os.listdir(dir):
-                if not name.startswith("."):
-                    screensavers.append(dir + (name[:-len(".py")] if name.endswith(".py") else name))
-
+                if not name.startswith(".") and isdir(dir + name):
+                    if pathlib.Path(dir + name + "/__init__.py").exists():
+                        screensavers.append(dir + name)
+                    else:
+                        screensavers += _get_screensaver_modules(dir + name)
     return screensavers
 
 def get_screensaver_title(module_name: str) -> str:
