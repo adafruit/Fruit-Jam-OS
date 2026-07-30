@@ -79,6 +79,8 @@ except ValueError:
     screensaver_index = 0
 
 if (width_config := os.getenv("CIRCUITPY_DISPLAY_WIDTH")) is not None:
+    if type(width_config) is str and width_config.isdigit():
+        width_config = int(width_config)
     if width_config not in [x[0] for x in VALID_DISPLAY_SIZES]:
         raise ValueError(f"Invalid display size. Must be one of: {VALID_DISPLAY_SIZES}")
     for display_size in VALID_DISPLAY_SIZES:
